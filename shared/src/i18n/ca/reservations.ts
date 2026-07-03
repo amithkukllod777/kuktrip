@@ -36,6 +36,7 @@ const reservations: TranslationStrings = {
   'reservations.type.ferry': 'Ferri',
   'reservations.type.bicycle': 'Bicicleta',
   'reservations.type.taxi': 'Taxi',
+  'reservations.type.transit': 'Transport públic',
   'reservations.type.transport_other': 'Altres',
   'reservations.confirm.delete': 'Segur que vols eliminar la reserva "{name}"?',
   'reservations.confirm.deleteTitle': 'Vols eliminar la reserva?',
@@ -139,7 +140,6 @@ const reservations: TranslationStrings = {
   'reservations.import.unavailable': 'La importació de reserves no està disponible en aquest servidor.',
   'reservations.import.unsupportedFormat': 'Format de fitxer no compatible. Utilitza EML, PDF, PKPass, HTML o TXT.',
   'reservations.import.fileTooLarge': 'El fitxer «{name}» supera el límit de 10 MB.',
-
   'reservations.urlLabel': 'Enllaç',
   'reservations.urlPlaceholder': 'https://...',
   'reservations.meta.linkPlace': 'Lloc / Activitat',
