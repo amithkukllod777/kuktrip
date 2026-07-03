@@ -9,8 +9,10 @@ import {
   Plane, Hotel, Utensils, Train, Car, Ship, Bus, Sailboat, Bike, CarTaxiFront, Route, Ticket, FileText, MapPin,
   Calendar, Hash, CheckCircle2, Circle, Pencil, Trash2, Plus, ChevronDown, ChevronRight, Users,
   ExternalLink, BookMarked, Lightbulb, Link2, Clock, ArrowRight, AlertCircle, Download,
+  TramFront, Footprints, StickyNote,
 } from 'lucide-react'
 import { openFile } from '../../utils/fileDownload'
+import { TransitTitle, TransitLegChips, TransitMetaBadges, fmtTransitDuration } from './transitDisplay'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import remarkBreaks from 'remark-breaks'
@@ -37,6 +39,7 @@ const TYPE_OPTIONS = [
   { value: 'bicycle',     labelKey: 'reservations.type.bicycle',     Icon: Bike, color: '#84cc16' },
   { value: 'cruise',      labelKey: 'reservations.type.cruise',      Icon: Ship, color: '#0ea5e9' },
   { value: 'ferry',       labelKey: 'reservations.type.ferry',       Icon: Sailboat, color: '#0d9488' },
+  { value: 'transit',     labelKey: 'reservations.type.transit',     Icon: TramFront, color: '#7c3aed' },
   { value: 'transport_other', labelKey: 'reservations.type.transport_other', Icon: Route, color: '#6b7280' },
   { value: 'event',       labelKey: 'reservations.type.event',       Icon: Ticket, color: '#f59e0b' },
   { value: 'tour',        labelKey: 'reservations.type.tour',        Icon: Users, color: '#10b981' },
@@ -109,7 +112,7 @@ function ReservationCard({ r, tripId, onEdit, onDelete, files = [], onNavigateTo
   const hasCode = !!r.confirmation_number
   const dateCols = [hasDate, hasTime, hasCode].filter(Boolean).length
 
-  const TRANSPORT_TYPES_SET = new Set(['flight', 'train', 'bus', 'car', 'taxi', 'bicycle', 'cruise', 'ferry', 'transport_other'])
+  const TRANSPORT_TYPES_SET = new Set(['flight', 'train', 'bus', 'car', 'taxi', 'bicycle', 'cruise', 'ferry', 'transit', 'transport_other'])
   const isTransportType = TRANSPORT_TYPES_SET.has(r.type)
   const isHotel = r.type === 'hotel'
   // For a hotel linked to an accommodation, the accommodation's own start/end days are
@@ -491,6 +494,95 @@ function Section({ title, count, children, defaultOpen = true, accent, storageKe
   )
 }
 
+/**
+ * A transit journey's own card (#1065) — leg chips + journey stats instead of
+ * the generic booking layout. Clicking anywhere opens the journey view.
+ */
+function TransitJourneyCard({ r, days, onOpen, onDelete, canEdit }: {
+  r: Reservation
+  days: Day[]
+  onOpen: (r: Reservation) => void
+  onDelete: (id: number) => void
+  canEdit: boolean
+}) {
+  const { t, locale } = useTranslation()
+  const timeFormat = useSettingsStore(st => st.settings.time_format) || '24h'
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const meta = typeof r.metadata === 'string' ? (() => { try { return JSON.parse(r.metadata || '{}') } catch { return {} } })() : (r.metadata || {})
+  const transit = meta.transit && Array.isArray(meta.transit.legs) ? meta.transit : null
+  const { date, time } = splitReservationDateTime(r.reservation_time)
+  const { time: endTime } = splitReservationDateTime(r.reservation_end_time)
+  const day = r.day_id ? days.find(d => d.id === r.day_id) : undefined
+  const dateStr = date ? new Date(date + 'T00:00:00Z').toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }) : null
+  const mins = transit?.duration ? Math.round(transit.duration / 60) : null
+  return (
+    <div
+      className="bg-surface-card"
+      onClick={() => onOpen(r)}
+      style={{ borderRadius: 12, border: '1px solid rgba(124,58,237,0.22)', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 9, cursor: 'pointer', transition: 'box-shadow 0.15s ease' }}
+      onMouseEnter={e => e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.06)'}
+      onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ width: 34, height: 34, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 10, background: 'rgba(124,58,237,0.1)' }}>
+          <TramFront size={16} strokeWidth={1.8} color="#7c3aed" />
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="text-content" style={{ fontSize: 'calc(13.5px * var(--fs-scale-body, 1))', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <TransitTitle title={r.title} iconSize={12} />
+          </div>
+          <div style={{ marginTop: 2 }}>
+            <TransitMetaBadges size="sm" items={[
+              { text: day ? (day.title || t('dayplan.dayN', { n: day.day_number })) : '' },
+              { icon: Calendar, text: dateStr || '' },
+              { icon: Clock, text: time ? `${formatTime(time, locale, timeFormat)}${endTime ? ` – ${formatTime(endTime, locale, timeFormat)}` : ''}` : '' },
+              { text: transit?.duration ? fmtTransitDuration(transit.duration, t) : '' },
+            ]} />
+          </div>
+        </div>
+        {canEdit && (
+          <button
+            onClick={e => { e.stopPropagation(); setConfirmOpen(true) }}
+            title={t('common.delete')}
+            className="bg-transparent text-content-faint"
+            style={{ appearance: 'none', border: 'none', width: 26, height: 26, borderRadius: 6, display: 'grid', placeItems: 'center', cursor: 'pointer', flexShrink: 0 }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; e.currentTarget.style.color = '#ef4444' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-faint)' }}
+          >
+            <Trash2 size={13} />
+          </button>
+        )}
+      </div>
+      {transit && (
+        <div style={{ paddingLeft: 44 }}>
+          <TransitLegChips legs={transit.legs} size="md" t={t} />
+        </div>
+      )}
+      {r.notes && (
+        <div className="text-content-faint" style={{ paddingLeft: 44, display: 'flex', alignItems: 'center', gap: 5, fontSize: 'calc(11px * var(--fs-scale-caption, 1))', minWidth: 0 }}>
+          <StickyNote size={11} style={{ flexShrink: 0 }} />
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <Markdown remarkPlugins={[remarkGfm]} allowedElements={['strong', 'em', 'del', 'code', 'a']} unwrapDisallowed>{r.notes.split('\n')[0]}</Markdown>
+          </span>
+        </div>
+      )}
+      {confirmOpen && ReactDOM.createPortal(
+        <div className="bg-[rgba(0,0,0,0.35)]" style={{ position: 'fixed', inset: 0, zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={e => { e.stopPropagation(); setConfirmOpen(false) }}>
+          <div className="bg-surface-card" style={{ borderRadius: 14, padding: 20, width: 340, boxShadow: '0 16px 48px rgba(0,0,0,0.22)' }} onClick={e => e.stopPropagation()}>
+            <div className="text-content" style={{ fontWeight: 600, fontSize: 'calc(14px * var(--fs-scale-body, 1))', marginBottom: 6 }}>{t('reservations.confirm.deleteTitle')}</div>
+            <div className="text-content-muted" style={{ fontSize: 'calc(12.5px * var(--fs-scale-body, 1))', marginBottom: 14 }}>{t('reservations.confirm.deleteBody', { name: r.title })}</div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+              <button onClick={e => { e.stopPropagation(); setConfirmOpen(false) }} className="text-content-muted" style={{ padding: '7px 14px', borderRadius: 9, border: '1px solid var(--border-primary)', background: 'none', fontSize: 'calc(12px * var(--fs-scale-body, 1))', cursor: 'pointer', fontFamily: 'inherit' }}>{t('common.cancel')}</button>
+              <button onClick={e => { e.stopPropagation(); setConfirmOpen(false); onDelete(r.id) }} style={{ padding: '7px 14px', borderRadius: 9, border: 'none', background: '#ef4444', color: '#fff', fontSize: 'calc(12px * var(--fs-scale-body, 1))', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>{t('common.delete')}</button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+    </div>
+  )
+}
+
 interface ReservationsPanelProps {
   tripId: number
   reservations: Reservation[]
@@ -539,8 +631,12 @@ export default function ReservationsPanel({ tripId, reservations, days, assignme
     typeFilters.size === 0 ? reservations : reservations.filter(r => typeFilters.has(r.type)),
   [reservations, typeFilters])
 
-  const allPending = filtered.filter(r => r.status !== 'confirmed')
-  const allConfirmed = filtered.filter(r => r.status === 'confirmed')
+  // Automated public transit (#1065) gets its own section — journeys planned via
+  // the transit search live alongside manual transports without mixing in.
+  const transitEntries = filtered.filter(r => r.type === 'transit')
+  const nonTransit = filtered.filter(r => r.type !== 'transit')
+  const allPending = nonTransit.filter(r => r.status !== 'confirmed')
+  const allConfirmed = nonTransit.filter(r => r.status === 'confirmed')
   const total = filtered.length
 
   const usedTypes = useMemo(() => new Set(reservations.map(r => r.type)), [reservations])
@@ -678,6 +774,11 @@ export default function ReservationsPanel({ tripId, reservations, days, assignme
           </div>
         ) : (
           <>
+            {transitEntries.length > 0 && (
+              <Section title={t('transit.sectionTitle')} count={transitEntries.length} accent="gray" storageKey={`trek:bookings-transit-open:${tripId}`}>
+                {transitEntries.map(r => <TransitJourneyCard key={r.id} r={r} days={days} onOpen={onEdit} onDelete={onDelete} canEdit={canEdit} />)}
+              </Section>
+            )}
             {allPending.length > 0 && (
               <Section title={t('reservations.pending')} count={allPending.length} accent="gray" storageKey={`trek:bookings-pending-open:${tripId}`}>
                 {allPending.map(r => <ReservationCard key={r.id} r={r} tripId={tripId} onEdit={onEdit} onDelete={onDelete} files={files} onNavigateToFiles={onNavigateToFiles} assignmentLookup={assignmentLookup} canEdit={canEdit} days={days} />)}

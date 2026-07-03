@@ -428,6 +428,7 @@ export const MapView = memo(function MapView({
   reservations = [] as Reservation[],
   showReservationStats = false,
   visibleConnectionIds = [] as number[],
+  showTransitRoutes = true,
   onReservationClick,
   pois = [] as Poi[],
   onPoiClick,
@@ -445,10 +446,11 @@ export const MapView = memo(function MapView({
     </Marker>
   )), [pois, onPoiClick])
   const visibleReservations = useMemo(() => {
-    if (!visibleConnectionIds || visibleConnectionIds.length === 0) return []
-    const set = new Set(visibleConnectionIds)
-    return reservations.filter((r: Reservation) => set.has(r.id))
-  }, [reservations, visibleConnectionIds])
+    const set = new Set(visibleConnectionIds || [])
+    // Transit journeys ride the route toggle — they are part of the computed
+    // day route, so hiding the route hides them too (#1065).
+    return reservations.filter((r: Reservation) => (r.type === 'transit' && showTransitRoutes) || set.has(r.id))
+  }, [reservations, visibleConnectionIds, showTransitRoutes])
   // Dynamic padding: account for sidebars + bottom inspector + day detail panel
   const paddingOpts = useMemo((): L.FitBoundsOptions => {
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 768

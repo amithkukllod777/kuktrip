@@ -297,41 +297,92 @@ describe('DayPlanSidebar', () => {
     expect(screen.getByText('Louvre Museum')).toBeInTheDocument()
   })
 
-  // ── Day title editing ───────────────────────────────────────────────────
+  // ── Transit search button (#1065 — replaced the rename pencil; renaming
+  //    moved next to the day name in the day detail panel) ─────────────────
 
-  it('FE-PLANNER-DAYPLAN-015: clicking edit button enters edit mode', async () => {
+  it('FE-PLANNER-DAYPLAN-015: transit button opens the route search for the day', async () => {
     const user = userEvent.setup()
-    const day = buildDay({ id: 10, date: '2025-06-01', title: 'Original Title' })
-    render(<DayPlanSidebar {...makeDefaultProps({ days: [day] })} />)
-    await user.click(screen.getByLabelText('Edit'))
-    await waitFor(() => {
-      expect(screen.getByDisplayValue('Original Title')).toBeInTheDocument()
-    })
+    const day = buildDay({ id: 10, date: '2025-06-01', title: 'Day 1' })
+    const onPlanTransit = vi.fn()
+    render(<DayPlanSidebar {...makeDefaultProps({ days: [day], onPlanTransit })} />)
+    await user.click(screen.getByLabelText('Public transit'))
+    expect(onPlanTransit).toHaveBeenCalledWith(10)
   })
 
-  it('FE-PLANNER-DAYPLAN-016: pressing Enter commits title', async () => {
-    const user = userEvent.setup()
-    const day = buildDay({ id: 10, date: '2025-06-01', title: 'Original Title' })
-    const onUpdateDayTitle = vi.fn()
-    render(<DayPlanSidebar {...makeDefaultProps({ days: [day], onUpdateDayTitle })} />)
-    // Enter edit mode
-    await user.click(screen.getByLabelText('Edit'))
-    const input = await screen.findByDisplayValue('Original Title')
-    await user.clear(input)
-    await user.type(input, 'New Title')
-    await user.keyboard('{Enter}')
-    expect(onUpdateDayTitle).toHaveBeenCalledWith(10, 'New Title')
+  it('FE-PLANNER-DAYPLAN-016: transit button is absent without the onPlanTransit prop', () => {
+    const day = buildDay({ id: 10, date: '2025-06-01', title: 'Day 1' })
+    render(<DayPlanSidebar {...makeDefaultProps({ days: [day] })} />)
+    expect(screen.queryByLabelText('Public transit')).not.toBeInTheDocument()
   })
 
-  it('FE-PLANNER-DAYPLAN-017: pressing Escape cancels edit', async () => {
-    const user = userEvent.setup()
+  it('FE-PLANNER-DAYPLAN-017: the day header no longer has a rename pencil (#1065)', () => {
     const day = buildDay({ id: 10, date: '2025-06-01', title: 'Original Title' })
-    render(<DayPlanSidebar {...makeDefaultProps({ days: [day] })} />)
-    await user.click(screen.getByLabelText('Edit'))
-    const input = await screen.findByDisplayValue('Original Title')
-    await user.keyboard('{Escape}')
-    expect(screen.queryByDisplayValue('Original Title')).not.toBeInTheDocument()
-    expect(screen.getByText('Original Title')).toBeInTheDocument()
+    render(<DayPlanSidebar {...makeDefaultProps({ days: [day], onPlanTransit: vi.fn() })} />)
+    expect(screen.queryByLabelText('Edit')).not.toBeInTheDocument()
+  })
+
+  it('FE-PLANNER-DAYPLAN-104: a transit journey renders line chips and opens its itinerary view, not the edit form (#1065)', async () => {
+    const user = userEvent.setup()
+    const onEditTransport = vi.fn()
+    const day = buildDay({ id: 10, date: '2025-06-01', title: 'Day 1' })
+    const res = {
+      ...buildReservation({
+        id: 300, type: 'transit', title: 'Fernsehturm → Zoo',
+        reservation_time: '2025-06-01T08:30:00', day_id: 10,
+      }),
+      metadata: {
+        transit: {
+          provider: 'transitous', duration: 1800, transfers: 1, walk_seconds: 240,
+          legs: [
+            { mode: 'WALK', duration: 240, from: { name: 'Start' }, to: { name: 'Alexanderplatz' } },
+            { mode: 'SUBWAY', line: 'U2', line_color: '#FF3300', line_text_color: '#FFFFFF', headsign: 'Ruhleben', duration: 1440, stops: 6, from: { name: 'Alexanderplatz', time: '08:36' }, to: { name: 'Zoo', time: '09:00' } },
+          ],
+        },
+      },
+    }
+    const onOpenTransit = vi.fn()
+    render(<DayPlanSidebar {...makeDefaultProps({ days: [day], reservations: [res as any], onEditTransport, onOpenTransit })} />)
+    // Line chip + transfer summary render inline in the timeline row; the
+    // title uses an arrow icon, so its parts are separate text nodes.
+    expect(screen.getByText('U2')).toBeInTheDocument()
+    // Transfer counts stay out of the compact row — the chips say it all.
+    expect(screen.queryByText(/1 transfers/)).not.toBeInTheDocument()
+    // Clicking the row opens the journey view — not the edit form.
+    await user.click(screen.getByText('Fernsehturm'))
+    expect(onEditTransport).not.toHaveBeenCalled()
+    expect(onOpenTransit).toHaveBeenCalledWith(expect.objectContaining({ id: 300 }))
+  })
+
+  it('FE-PLANNER-DAYPLAN-105: the transit row folds its itinerary out inline (#1065)', async () => {
+    const user = userEvent.setup()
+    const day = buildDay({ id: 10, date: '2025-06-01', title: 'Day 1' })
+    const res = {
+      ...buildReservation({ id: 301, type: 'transit', title: 'A → B', reservation_time: '2025-06-01T08:30:00', day_id: 10 }),
+      metadata: {
+        transit: {
+          provider: 'transitous', duration: 1800, transfers: 1, walk_seconds: 240,
+          legs: [
+            { mode: 'WALK', duration: 240, from: { name: 'Start' }, to: { name: 'Alexanderplatz' } },
+            { mode: 'SUBWAY', line: 'U2', line_color: '#FF3300', headsign: 'Ruhleben', duration: 1440, stops: 6, from: { name: 'Alexanderplatz', time: '08:36', track: '2' }, to: { name: 'Zoo', time: '09:00' } },
+          ],
+        },
+      },
+      endpoints: [
+        { role: 'from', sequence: 0, name: 'A', code: null, lat: 1, lng: 2, timezone: null, local_date: null, local_time: null },
+        { role: 'to', sequence: 1, name: 'B', code: null, lat: 3, lng: 4, timezone: null, local_date: null, local_time: null },
+      ],
+    }
+    const onToggleConnection = vi.fn()
+    render(<DayPlanSidebar {...makeDefaultProps({ days: [day], reservations: [res as any], onOpenTransit: vi.fn(), onToggleConnection, visibleConnectionIds: [] })} />)
+    // No map-connections toggle on transit rows — the expander replaces it.
+    expect(screen.queryByTitle(/connections/i)).not.toBeInTheDocument()
+    // Collapsed: no stop names beyond the chips.
+    expect(screen.queryByText('Alexanderplatz')).not.toBeInTheDocument()
+    await user.click(screen.getByLabelText('Expand'))
+    expect(await screen.findByText('Alexanderplatz')).toBeInTheDocument()
+    expect(screen.getByText(/Platform 2/)).toBeInTheDocument()
+    await user.click(screen.getByLabelText('Collapse'))
+    expect(screen.queryByText('Alexanderplatz')).not.toBeInTheDocument()
   })
 
   // ── Day info button ─────────────────────────────────────────────────────
@@ -642,20 +693,7 @@ describe('DayPlanSidebar', () => {
     await waitFor(() => expect(onReorder).toHaveBeenCalledWith(10, expect.any(Array)))
   })
 
-  // ── Title blur commits ───────────────────────────────────────────────────
-
-  it('FE-PLANNER-DAYPLAN-042: blurring title input commits the edit', async () => {
-    const user = userEvent.setup()
-    const onUpdateDayTitle = vi.fn()
-    const day = buildDay({ id: 10, date: '2025-06-01', title: 'Old Title' })
-    render(<DayPlanSidebar {...makeDefaultProps({ days: [day], onUpdateDayTitle })} />)
-    await user.click(screen.getByLabelText('Edit'))
-    const input = await screen.findByDisplayValue('Old Title')
-    await user.clear(input)
-    await user.type(input, 'New Title')
-    fireEvent.blur(input)
-    await waitFor(() => expect(onUpdateDayTitle).toHaveBeenCalledWith(10, 'New Title'))
-  })
+  // Day-title renaming moved to DayDetailPanel (#1065) — covered there.
 
   // ── ICS export button ────────────────────────────────────────────────────
 

@@ -1,9 +1,10 @@
-import { createElement, useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, createElement, useEffect, useMemo, useRef, useState } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { Marker, Polyline, Tooltip, useMap, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
-import { Plane, Train, Ship, Car, Bus, Sailboat, Bike, CarTaxiFront, Route } from 'lucide-react'
+import { Plane, Train, Ship, Car, Bus, Sailboat, Bike, CarTaxiFront, Route, TramFront } from 'lucide-react'
 import { escapeHtml } from '@trek/shared'
+import { getTransitMapSegments, type TransitMapSegment } from './transitGeometry'
 import { useSettingsStore } from '../../store/settingsStore'
 import type { Reservation, ReservationEndpoint } from '../../types'
 
@@ -11,8 +12,8 @@ const ENDPOINT_PANE = 'reservation-endpoints'
 const AIRPORT_BADGE_HALF_PX = 16
 const BADGE_GAP_PX = 5
 
-type TransportType = 'flight' | 'train' | 'cruise' | 'car' | 'bus' | 'taxi' | 'bicycle' | 'ferry' | 'transport_other'
-const TRANSPORT_TYPES: TransportType[] = ['flight', 'train', 'cruise', 'car', 'bus', 'taxi', 'bicycle', 'ferry', 'transport_other']
+type TransportType = 'flight' | 'train' | 'cruise' | 'car' | 'bus' | 'taxi' | 'bicycle' | 'ferry' | 'transit' | 'transport_other'
+const TRANSPORT_TYPES: TransportType[] = ['flight', 'train', 'cruise', 'car', 'bus', 'taxi', 'bicycle', 'ferry', 'transit', 'transport_other']
 
 const TRANSPORT_COLOR = '#3b82f6'
 
@@ -25,6 +26,7 @@ const TYPE_META: Record<TransportType, { color: string; icon: typeof Plane; geod
   taxi: { color: TRANSPORT_COLOR, icon: CarTaxiFront, geodesic: false },
   bicycle: { color: TRANSPORT_COLOR, icon: Bike, geodesic: false },
   ferry: { color: TRANSPORT_COLOR, icon: Sailboat, geodesic: true },
+  transit: { color: TRANSPORT_COLOR, icon: TramFront, geodesic: false },
   transport_other: { color: TRANSPORT_COLOR, icon: Route, geodesic: false },
 }
 
@@ -161,6 +163,7 @@ interface TransportItem {
   waypoints: ReservationEndpoint[]
   type: TransportType
   arcs: [number, number][][]
+  transitSegs: TransitMapSegment[]
   primaryArc: [number, number][]
   fallback: [number, number]
   mainLabel: string | null
@@ -348,7 +351,7 @@ export default function ReservationOverlay({ reservations, showConnections, show
   useMapEvents({
     zoomend: () => setZoom(map.getZoom()),
   })
-  const showEndpointLabels = useSettingsStore(s => s.settings.map_booking_labels) !== false
+  const showEndpointLabels = useSettingsStore(s => s.settings.map_booking_labels) === true
 
   const items = useMemo<TransportItem[]>(() => {
     const out: TransportItem[] = []
@@ -392,7 +395,7 @@ export default function ReservationOverlay({ reservations, showConnections, show
       const subParts = [duration, distance].filter(Boolean) as string[]
       const subLabel = subParts.length > 0 ? subParts.join(' · ') : null
 
-      out.push({ res: r, from, to, waypoints, type, arcs, primaryArc, fallback, mainLabel, subLabel })
+      out.push({ res: r, from, to, waypoints, type, arcs, transitSegs: type === 'transit' ? getTransitMapSegments(r) : [], primaryArc, fallback, mainLabel, subLabel })
     }
     return out
   }, [reservations])
@@ -411,7 +414,7 @@ export default function ReservationOverlay({ reservations, showConnections, show
     for (const item of visibleItems) {
       const fromPx = map.latLngToContainerPoint([item.from.lat, item.from.lng])
       const toPx = map.latLngToContainerPoint([item.to.lat, item.to.lng])
-      const minPx = item.type === 'flight' ? 50 : item.type === 'cruise' ? 300 : item.type === 'car' ? 150 : 400
+      const minPx = item.type === 'flight' ? 50 : item.type === 'cruise' ? 300 : item.type === 'car' ? 150 : item.type === 'transit' ? 900 : 400
       if (fromPx.distanceTo(toPx) >= minPx) set.add(item.res.id)
     }
     return set
@@ -421,7 +424,24 @@ export default function ReservationOverlay({ reservations, showConnections, show
 
   return (
     <>
-      {visibleItems.map(item => item.arcs.map((seg, segIdx) => (
+      {visibleItems.map(item => item.transitSegs.length > 0
+        ? item.transitSegs.map((seg, segIdx) => (
+          <Fragment key={`transit-${item.res.id}-${segIdx}`}>
+            {!seg.walk && (
+              <Polyline
+                positions={seg.coords}
+                pathOptions={{ color: '#ffffff', weight: 6, opacity: 0.85, lineCap: 'round', lineJoin: 'round' }}
+              />
+            )}
+            <Polyline
+              positions={seg.coords}
+              pathOptions={seg.walk
+                ? { color: '#64748b', weight: 3, opacity: 0.8, dashArray: '1, 7', lineCap: 'round' }
+                : { color: seg.color || TYPE_META.transit.color, weight: 3.5, opacity: 0.95, lineCap: 'round', lineJoin: 'round' }}
+            />
+          </Fragment>
+        ))
+        : item.arcs.map((seg, segIdx) => (
         <Polyline
           key={`line-${item.res.id}-${segIdx}`}
           positions={seg}

@@ -81,6 +81,7 @@ interface Props {
   hasDayDetail?: boolean
   reservations?: Reservation[]
   visibleConnectionIds?: number[]
+  showTransitRoutes?: boolean
   showReservationStats?: boolean
   onReservationClick?: (reservationId: number) => void
   pois?: Poi[]
@@ -199,6 +200,7 @@ export function MapViewGL({
   hasDayDetail = false,
   reservations = [],
   visibleConnectionIds = [],
+  showTransitRoutes = true,
   showReservationStats = false,
   onReservationClick,
   pois = [],
@@ -212,7 +214,7 @@ export function MapViewGL({
   const mapboxToken = useSettingsStore(s => s.settings.mapbox_access_token || '')
   const mapbox3d = useSettingsStore(s => s.settings.mapbox_3d_enabled !== false)
   const mapboxQuality = useSettingsStore(s => s.settings.mapbox_quality_mode === true)
-  const showEndpointLabels = useSettingsStore(s => s.settings.map_booking_labels) !== false
+  const showEndpointLabels = useSettingsStore(s => s.settings.map_booking_labels) === true
   const mapLang = useSettingsStore(s => s.settings.language)
   const isMapLibre = glProvider === 'maplibre-gl'
   const gl = (isMapLibre ? maplibregl : mapboxgl) as any
@@ -800,10 +802,11 @@ export function MapViewGL({
   // DayPlanSidebar — nothing is rendered until the user enables a
   // booking's route, matching the Leaflet MapView's behaviour.
   const visibleReservations = useMemo(() => {
-    if (!visibleConnectionIds || visibleConnectionIds.length === 0) return []
-    const set = new Set(visibleConnectionIds)
-    return reservations.filter(r => set.has(r.id))
-  }, [reservations, visibleConnectionIds])
+    const set = new Set(visibleConnectionIds || [])
+    // Transit journeys ride the route toggle — they are part of the computed
+    // day route, so hiding the route hides them too (#1065).
+    return reservations.filter(r => (r.type === 'transit' && showTransitRoutes) || set.has(r.id))
+  }, [reservations, visibleConnectionIds, showTransitRoutes])
 
   useEffect(() => {
     const map = mapRef.current

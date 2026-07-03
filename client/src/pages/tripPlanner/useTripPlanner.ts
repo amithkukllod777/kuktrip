@@ -92,7 +92,7 @@ export function useTripPlanner() {
     }).catch(() => {})
   }, [])
 
-  const TRANSPORT_TYPES = new Set(['flight', 'train', 'bus', 'car', 'taxi', 'bicycle', 'cruise', 'ferry', 'transport_other'])
+  const TRANSPORT_TYPES = new Set(['flight', 'train', 'bus', 'car', 'taxi', 'bicycle', 'cruise', 'ferry', 'transit', 'transport_other'])
 
   const TRIP_TABS = [
     { id: 'plan', label: t('trip.tabs.plan'), icon: Map },
@@ -162,6 +162,11 @@ export function useTripPlanner() {
   const [showTransportModal, setShowTransportModal] = useState<boolean>(false)
   const [editingTransport, setEditingTransport] = useState<Reservation | null>(null)
   const [transportModalDayId, setTransportModalDayId] = useState<number | null>(null)
+  // Public transit (#1065): open the TransportModal in its Automated mode, seed
+  // the search (change-route), and show the journey view for a saved entry.
+  const [transportModalAutomated, setTransportModalAutomated] = useState<boolean>(false)
+  const [transitPrefill, setTransitPrefill] = useState<{ from?: { name: string; lat: number; lng: number } | null; to?: { name: string; lat: number; lng: number } | null } | null>(null)
+  const [transitJourney, setTransitJourney] = useState<Reservation | null>(null)
 
   // The bottom-nav "+" is context-aware per tab: on the Bookings / Transports tabs
   // it opens the booking / transport modal via ?create=reservation|transport
@@ -859,6 +864,7 @@ export function useTripPlanner() {
     bookingForAssignmentId, setBookingForAssignmentId,
     showTransportModal, setShowTransportModal, editingTransport, setEditingTransport,
     transportModalDayId, setTransportModalDayId,
+    transportModalAutomated, setTransportModalAutomated, transitPrefill, setTransitPrefill, transitJourney, setTransitJourney,
     reservationPrefill, transportPrefill, importReviewActive, startImportReview, advanceImportReview,
     routeShown, setRouteShown, routeProfile, setRouteProfile, fitKey, setFitKey,
     mobileSidebarOpen, setMobileSidebarOpen, mobilePlanScrollTopRef, mobilePlacesScrollTopRef,

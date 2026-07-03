@@ -4,7 +4,7 @@ declare global { interface Window { __dragData: DragDataPayload | null } }
 
 import React, { useState, useEffect, useLayoutEffect, useRef, useMemo } from 'react'
 import { avatarSrc } from '../../utils/avatarSrc'
-import { ChevronDown, ChevronRight, ChevronUp, Navigation, RotateCcw, ExternalLink, Clock, Pencil, GripVertical, Ticket, Plus, FileText, Trash2, Car, Lock, Hotel, Footprints, Route as RouteIcon, Bookmark } from 'lucide-react'
+import { ChevronDown, ChevronRight, ChevronUp, Navigation, RotateCcw, ExternalLink, Clock, Pencil, GripVertical, Ticket, Plus, FileText, Trash2, Car, Lock, Hotel, Footprints, Route as RouteIcon, Bookmark, TramFront } from 'lucide-react'
 import { assignmentsApi, reservationsApi } from '../../api/client'
 import { calculateRoute, calculateRouteWithLegs, optimizeRoute, generateGoogleMapsUrl } from '../Map/RouteCalculator'
 import PlaceAvatar from '../shared/PlaceAvatar'
@@ -37,6 +37,7 @@ import { DayPlanSidebarToolbar } from './DayPlanSidebarToolbar'
 import { DayPlanSidebarNoteModal } from './DayPlanSidebarNoteModal'
 import { DayPlanSidebarTimeConfirmModal } from './DayPlanSidebarTimeConfirmModal'
 import { DayPlanSidebarTransportDetailModal } from './DayPlanSidebarTransportDetailModal'
+import { TransitTitle, TransitLegChips, TransitItineraryInline } from './transitDisplay'
 import { DayPlanSidebarFooter } from './DayPlanSidebarFooter'
 import type { Trip, Day, Place, Category, Assignment, Accommodation, Reservation, AssignmentsMap, RouteResult, RouteSegment, DayNote } from '../../types'
 import { getGoogleMapsUrlForPlace } from './placeGoogleMaps'
@@ -84,6 +85,10 @@ interface DayPlanSidebarProps {
   onUndo?: () => void
   onRouteRefresh?: () => void
   onAddTransport?: (dayId: number) => void
+  /** Opens the public-transit route search for a day (#1065). */
+  onPlanTransit?: (dayId: number) => void
+  /** Opens the journey view for a saved transit entry (#1065). */
+  onOpenTransit?: (reservation: Reservation) => void
   onEditTransport?: (reservation: Reservation) => void
   onEditReservation?: (reservation: Reservation) => void
   onAddBookingToAssignment?: (dayId: number, assignmentId: number) => void
@@ -127,6 +132,8 @@ function useDayPlanSidebar(props: DayPlanSidebarProps) {
   onUndo,
   onRouteRefresh,
   onAddTransport,
+  onPlanTransit,
+  onOpenTransit,
   onEditTransport,
   onEditReservation,
   onAddBookingToAssignment,
@@ -180,6 +187,8 @@ function useDayPlanSidebar(props: DayPlanSidebarProps) {
   const [pdfHover, setPdfHover] = useState(false)
   const [icsHover, setIcsHover] = useState(false)
   const [hoveredAssignmentId, setHoveredAssignmentId] = useState<number | null>(null)
+  // Transit rows fold their itinerary out inline (#1065).
+  const [expandedTransitIds, setExpandedTransitIds] = useState<Set<number>>(new Set())
   const [dropTargetKey, _setDropTargetKey] = useState(null)
   const dropTargetRef = useRef(null)
   const setDropTargetKey = (key) => { dropTargetRef.current = key; _setDropTargetKey(key) }
@@ -1000,7 +1009,11 @@ function useDayPlanSidebar(props: DayPlanSidebarProps) {
     onUndo,
     onRouteRefresh,
     onAddTransport,
+    onPlanTransit,
+    onOpenTransit,
     onEditTransport,
+    expandedTransitIds,
+    setExpandedTransitIds,
     onEditReservation,
     onAddBookingToAssignment,
     initialScrollTop,
@@ -1161,7 +1174,11 @@ const DayPlanSidebar = React.memo(function DayPlanSidebar(props: DayPlanSidebarP
     onUndo,
     onRouteRefresh,
     onAddTransport,
+    onPlanTransit,
+    onOpenTransit,
     onEditTransport,
+    expandedTransitIds,
+    setExpandedTransitIds,
     onEditReservation,
     onAddBookingToAssignment,
     initialScrollTop,
@@ -1472,9 +1489,13 @@ const DayPlanSidebar = React.memo(function DayPlanSidebar(props: DayPlanSidebarP
                     const div = '1px solid var(--border-faint)'
                     return (
                       <div className="dp-day-actions" style={{ alignSelf: 'flex-start', flexShrink: 0, display: 'grid', gridTemplateColumns: '1fr 1fr', border: div, borderRadius: 9, overflow: 'hidden' }}>
-                        <button onClick={e => startEditTitle(day, e)} aria-label={t('common.edit')} style={{ ...cell, border: 'none', borderRight: div, borderBottom: div }}>
-                          <Pencil size={14} strokeWidth={1.8} />
-                        </button>
+                        {/* Public transit search (#1065) — replaced the rename pencil,
+                            which moved next to the day name in the day detail view. */}
+                        {onPlanTransit ? (
+                          <button onClick={e => { e.stopPropagation(); onPlanTransit(day.id) }} title={t('transit.title')} aria-label={t('transit.title')} style={{ ...cell, border: 'none', borderRight: div, borderBottom: div }}>
+                            <TramFront size={14} strokeWidth={1.8} />
+                          </button>
+                        ) : <div style={{ borderRight: div, borderBottom: div }} />}
                         {onAddTransport ? (
                           <button onClick={e => { e.stopPropagation(); onAddTransport(day.id) }} title={t('transport.addTransport')} style={{ ...cell, border: 'none', borderBottom: div }}>
                             <Plus size={14} strokeWidth={1.8} />
@@ -1946,6 +1967,11 @@ const DayPlanSidebar = React.memo(function DayPlanSidebar(props: DayPlanSidebarP
                           subtitle = [meta.train_number, meta.platform ? `Gl. ${meta.platform}` : '', meta.seat ? `Sitz ${meta.seat}` : ''].filter(Boolean).join(' · ')
                         }
 
+                        // A transit journey (#1065) renders its itinerary inline —
+                        // line badges in their colors instead of a plain subtitle,
+                        // so the connection is recognisable at a glance.
+                        const transitMeta = res.type === 'transit' && meta.transit && Array.isArray(meta.transit.legs) ? meta.transit : null
+
                         // Multi-day span phase (single-leg / non-flight only — a
                         // multi-leg flight is shown as one row per leg, see below).
                         const spanLabel = res.__leg ? null : getSpanLabel(res, spanPhase)
@@ -1956,8 +1982,16 @@ const DayPlanSidebar = React.memo(function DayPlanSidebar(props: DayPlanSidebarP
                           <React.Fragment key={`transport-${res.id}-${legKey}-${day.id}`}>
                           <div
                             onClick={() => {
-                              if (!canEditDays) return
                               const target = reservations.find(x => x.id === res.id) ?? res
+                              // A transit journey opens its own journey view — the rich
+                              // stop-by-stop breakdown with its booking fields, never the
+                              // generic edit form (#1065).
+                              if (transitMeta) {
+                                if (onOpenTransit) onOpenTransit(target)
+                                else setTransportDetail(target)
+                                return
+                              }
+                              if (!canEditDays) return
                               if (TRANSPORT_TYPES.has(res.type)) onEditTransport?.(target)
                               else onEditReservation?.(target)
                             }}
@@ -2015,7 +2049,7 @@ const DayPlanSidebar = React.memo(function DayPlanSidebar(props: DayPlanSidebarP
                               borderTop: showDropLine ? '2px solid var(--text-primary)' : undefined,
                               borderBottom: showDropLineAfter ? '2px solid var(--text-primary)' : undefined,
                               background: `${color}08`,
-                              cursor: canEditDays && onEditTransport ? 'pointer' : 'default', userSelect: 'none',
+                              cursor: (transitMeta || (canEditDays && onEditTransport)) ? 'pointer' : 'default', userSelect: 'none',
                               transition: 'background 0.1s',
                               opacity: draggingId === res.id ? 0.4 : spanPhase === 'middle' ? 0.65 : 1,
                             }}
@@ -2041,8 +2075,8 @@ const DayPlanSidebar = React.memo(function DayPlanSidebar(props: DayPlanSidebarP
                                     {spanLabel}
                                   </span>
                                 )}
-                                <span style={{ fontSize: 'calc(12.5px * var(--fs-scale-body, 1))', fontWeight: 500, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                  {res.title}
+                                <span style={{ fontSize: 'calc(12.5px * var(--fs-scale-body, 1))', fontWeight: 500, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
+                                  {transitMeta ? <TransitTitle title={res.title} iconSize={11} /> : res.title}
                                 </span>
                                 {(() => {
                                   const { time: dispTime } = splitReservationDateTime(displayTime)
@@ -2059,13 +2093,44 @@ const DayPlanSidebar = React.memo(function DayPlanSidebar(props: DayPlanSidebarP
                                   )
                                 })()}
                               </div>
-                              {subtitle && (
+                              {transitMeta ? (
+                                <div style={{ display: 'flex', alignItems: 'center', marginTop: 3 }}>
+                                  <TransitLegChips legs={transitMeta.legs} size="sm" t={t} />
+                                </div>
+                              ) : subtitle && (
                                 <div style={{ fontSize: 'calc(10px * var(--fs-scale-caption, 1))', color: 'var(--text-faint)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                   {subtitle}
                                 </div>
                               )}
                             </div>
-                            {onToggleConnection && (!res.__leg || res.__leg.index === 0) && (res.endpoints || []).length >= 2 && (() => {
+                            {transitMeta && (() => {
+                              const expanded = expandedTransitIds.has(res.id)
+                              return (
+                                <button
+                                  type="button"
+                                  onClick={e => {
+                                    e.stopPropagation()
+                                    setExpandedTransitIds(prev => {
+                                      const next = new Set(prev)
+                                      if (next.has(res.id)) next.delete(res.id); else next.add(res.id)
+                                      return next
+                                    })
+                                  }}
+                                  title={t(expanded ? 'common.collapse' : 'common.expand')}
+                                  aria-label={t(expanded ? 'common.collapse' : 'common.expand')}
+                                  style={{
+                                    flexShrink: 0, appearance: 'none', width: 26, height: 26, borderRadius: 6,
+                                    display: 'grid', placeItems: 'center', cursor: 'pointer', border: 'none',
+                                    background: 'transparent', color: 'var(--text-faint)',
+                                  }}
+                                  onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)' }}
+                                  onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-faint)' }}
+                                >
+                                  {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                                </button>
+                              )
+                            })()}
+                            {!transitMeta && onToggleConnection && (!res.__leg || res.__leg.index === 0) && (res.endpoints || []).length >= 2 && (() => {
                               const active = visibleConnectionIds.includes(res.id)
                               return (
                                 <button
@@ -2089,6 +2154,11 @@ const DayPlanSidebar = React.memo(function DayPlanSidebar(props: DayPlanSidebarP
                               )
                             })()}
                           </div>
+                          {transitMeta && expandedTransitIds.has(res.id) && (
+                            <div style={{ margin: '2px 8px 4px', padding: '9px 10px 9px 12px', borderRadius: 6, border: `1px solid ${color}26`, background: `${color}05` }}>
+                              <TransitItineraryInline legs={transitMeta.legs} t={t} />
+                            </div>
+                          )}
                           {routeLegs[day.id]?.[res.id] && <RouteConnector seg={routeLegs[day.id]![res.id]} profile={routeProfile} />}
                           </React.Fragment>
                         )
@@ -2391,6 +2461,7 @@ const DayPlanSidebar = React.memo(function DayPlanSidebar(props: DayPlanSidebarP
         transportDetail={transportDetail}
         setTransportDetail={setTransportDetail}
         onNavigateToFiles={onNavigateToFiles}
+        onEdit={canEditDays && onEditTransport ? (res) => { setTransportDetail(null); onEditTransport(res) } : undefined}
         t={t}
         locale={locale}
         timeFormat={timeFormat}
