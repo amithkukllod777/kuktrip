@@ -26,6 +26,7 @@ TREK ships with translations for 20 languages. You can change your language at a
 | `ko` | 한국어 |
 | `uk` | Українська |
 | `gr` | Ελληνικά |
+| `ca` | Català |
 
 ## RTL support
 
