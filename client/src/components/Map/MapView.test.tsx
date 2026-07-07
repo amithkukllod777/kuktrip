@@ -4,7 +4,7 @@ import { render, screen } from '../../../tests/helpers/render'
 import { fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { resetAllStores } from '../../../tests/helpers/store'
-import { buildPlace } from '../../../tests/helpers/factories'
+import { buildPlace, buildReservation } from '../../../tests/helpers/factories'
 import * as photoService from '../../services/photoService'
 
 const mapMock = vi.hoisted(() => ({
@@ -15,6 +15,7 @@ const mapMock = vi.hoisted(() => ({
   on: vi.fn(),
   off: vi.fn(),
   panBy: vi.fn(),
+  latLngToContainerPoint: vi.fn(() => ({ x: 0, y: 0, distanceTo: () => 1000 })),
 }))
 
 vi.mock('react-leaflet', () => ({
@@ -39,6 +40,7 @@ vi.mock('react-leaflet', () => ({
   Polyline: ({ positions }: any) => <div data-testid="polyline" data-points={JSON.stringify(positions)} />,
   CircleMarker: () => <div data-testid="circle-marker" />,
   Circle: () => <div data-testid="circle" />,
+  Tooltip: ({ children }: any) => <>{children}</>,
   useMap: () => mapMock,
   useMapEvents: () => ({}),
 }))
@@ -301,5 +303,31 @@ describe('MapView', () => {
     rerender(<MapView places={dayPlaces} dayPlaces={dayPlaces} route={[[[47.9, 1.9], [48.05, 2.05], [48.2, 2.2]]]} fitKey={5} />)
     expect(L.latLngBounds).toHaveBeenCalled()
     expect(lastBounds()).toHaveLength(5) // 2 destinations + 3 route points
+  })
+
+  it('FE-COMP-MAPVIEW-023: a routable reservation not in visibleConnectionIds draws no route', () => {
+    const reservation = buildReservation({
+      id: 43,
+      type: 'flight',
+      endpoints: [
+        { role: 'from', sequence: 0, name: 'A', code: 'AAA', lat: 1, lng: 2, timezone: null, local_time: null, local_date: null },
+        { role: 'to', sequence: 1, name: 'B', code: 'BBB', lat: 3, lng: 4, timezone: null, local_time: null, local_date: null },
+      ],
+    } as any)
+    render(<MapView reservations={[reservation]} visibleConnectionIds={[]} />)
+    expect(screen.queryByTestId('polyline')).not.toBeInTheDocument()
+  })
+
+  it('FE-COMP-MAPVIEW-024: a routable reservation in visibleConnectionIds draws its route', () => {
+    const reservation = buildReservation({
+      id: 42,
+      type: 'flight',
+      endpoints: [
+        { role: 'from', sequence: 0, name: 'A', code: 'AAA', lat: 1, lng: 2, timezone: null, local_time: null, local_date: null },
+        { role: 'to', sequence: 1, name: 'B', code: 'BBB', lat: 3, lng: 4, timezone: null, local_time: null, local_date: null },
+      ],
+    } as any)
+    render(<MapView reservations={[reservation]} visibleConnectionIds={[42]} />)
+    expect(screen.getAllByTestId('polyline').length).toBeGreaterThan(0)
   })
 })

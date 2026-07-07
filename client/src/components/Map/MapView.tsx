@@ -10,6 +10,7 @@ import { mapsApi } from '../../api/client'
 import { getCategoryIcon, CATEGORY_ICON_MAP } from '../shared/categoryIcons'
 import ReservationOverlay from './ReservationOverlay'
 import { useTransportRoutes } from '../../hooks/useTransportRoutes'
+import { visibleRouteReservations } from '../../utils/reservationRoutes'
 import type { Reservation } from '../../types'
 import { POI_CATEGORY_BY_KEY, type Poi } from './poiCategories'
 
@@ -463,12 +464,9 @@ export const MapView = memo(function MapView({
       <Tooltip direction="top" offset={[0, -10]} opacity={1} className="map-tooltip">{poi.name}</Tooltip>
     </Marker>
   )), [pois, onPoiClick])
-  const visibleReservations = useMemo(() => {
-    const set = new Set(visibleConnectionIds || [])
-    // Transit journeys ride the route toggle — they are part of the computed
-    // day route, so hiding the route hides them too (#1065).
-    return reservations.filter((r: Reservation) => (r.type === 'transit' && showTransitRoutes) || set.has(r.id))
-  }, [reservations, visibleConnectionIds, showTransitRoutes])
+  const visibleReservations = useMemo(() => (
+    visibleRouteReservations(reservations, { visibleConnectionIds, showTransitRoutes })
+  ), [reservations, visibleConnectionIds, showTransitRoutes])
   // Real road geometry for car/bus/taxi/bicycle bookings (straight line until it loads/if it fails).
   const transportRoutes = useTransportRoutes(visibleReservations)
   // Dynamic padding: account for sidebars + bottom inspector + day detail panel

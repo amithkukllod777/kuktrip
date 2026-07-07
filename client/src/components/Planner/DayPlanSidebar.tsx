@@ -68,6 +68,8 @@ interface DayPlanSidebarProps {
   reservations?: Reservation[]
   visibleConnectionIds?: number[]
   onToggleConnection?: (reservationId: number) => void
+  allConnectionsShown?: boolean
+  onToggleAllConnections?: () => void
   externalTransportDetail?: Reservation | null
   onExternalTransportDetailHandled?: () => void
   onAddReservation: (dayId: number) => void
@@ -115,6 +117,8 @@ function useDayPlanSidebar(props: DayPlanSidebarProps) {
   reservations = [],
   visibleConnectionIds = [],
   onToggleConnection,
+  allConnectionsShown = false,
+  onToggleAllConnections,
   externalTransportDetail,
   onExternalTransportDetailHandled,
   onAddReservation,
@@ -992,6 +996,8 @@ function useDayPlanSidebar(props: DayPlanSidebarProps) {
     reservations,
     visibleConnectionIds,
     onToggleConnection,
+    allConnectionsShown,
+    onToggleAllConnections,
     externalTransportDetail,
     onExternalTransportDetailHandled,
     onAddReservation,
@@ -1157,6 +1163,8 @@ const DayPlanSidebar = React.memo(function DayPlanSidebar(props: DayPlanSidebarP
     reservations,
     visibleConnectionIds,
     onToggleConnection,
+    allConnectionsShown,
+    onToggleAllConnections,
     externalTransportDetail,
     onExternalTransportDetailHandled,
     onAddReservation,
@@ -1293,6 +1301,8 @@ const DayPlanSidebar = React.memo(function DayPlanSidebar(props: DayPlanSidebarP
         categories={categories}
         assignments={assignments}
         reservations={reservations}
+        allConnectionsShown={allConnectionsShown}
+        onToggleAllConnections={onToggleAllConnections}
         dayNotes={dayNotes}
         t={t}
         locale={locale}
