@@ -456,6 +456,8 @@ const settings: TranslationStrings = {
   'settings.offline.banner.syncing': '{count} szinkronizálása…',
   'settings.offline.banner.failed': 'Sikertelen szinkronizálás: {count}',
   'settings.offline.banner.conflicts': 'Ütközések: {count}',
+  'settings.alwaysShowRoutes': 'Mindig jelenjenek meg a foglalási útvonalak',
+  'settings.alwaysShowRoutesHint': 'Automatikusan megjeleníti minden repülőjárat, vonat és egyéb foglalás útvonalát a térképen, nincs szükség egyenkénti bekapcsolásra.',
 };
 
 export default settings;

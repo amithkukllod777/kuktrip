@@ -452,6 +452,8 @@ const settings: TranslationStrings = {
   'settings.offline.banner.syncing': 'Synkroniserar {count}…',
   'settings.offline.banner.failed': 'Kunde inte synkronisera: {count}',
   'settings.offline.banner.conflicts': 'Konflikter: {count}',
+  'settings.alwaysShowRoutes': 'Visa alltid bokningsrutter',
+  'settings.alwaysShowRoutesHint': 'Visar automatiskt rutten för varje flyg, tåg och annan bokning på kartan, utan att du behöver aktivera det för varje bokning för sig.',
 };
 
 export default settings;

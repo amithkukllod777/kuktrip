@@ -455,6 +455,8 @@ const settings: TranslationStrings = {
   'settings.offline.banner.syncing': 'Menyinkronkan {count}…',
   'settings.offline.banner.failed': 'Gagal menyinkronkan: {count}',
   'settings.offline.banner.conflicts': 'Konflik: {count}',
+  'settings.alwaysShowRoutes': 'Selalu tampilkan rute pemesanan',
+  'settings.alwaysShowRoutesHint': 'Menampilkan rute setiap penerbangan, kereta, dan pemesanan lainnya di peta secara otomatis, tanpa perlu mengaktifkannya satu per satu.',
 };
 
 export default settings;

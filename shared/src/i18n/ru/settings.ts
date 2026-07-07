@@ -457,6 +457,8 @@ const settings: TranslationStrings = {
   'settings.offline.banner.syncing': 'Синхронизация {count}…',
   'settings.offline.banner.failed': 'Не удалось синхронизировать: {count}',
   'settings.offline.banner.conflicts': 'Конфликты: {count}',
+  'settings.alwaysShowRoutes': 'Всегда показывать маршруты бронирований',
+  'settings.alwaysShowRoutesHint': 'Автоматически показывает на карте маршрут для каждого рейса, поезда и другого бронирования — без необходимости включать это отдельно для каждого элемента.',
 };
 
 export default settings;

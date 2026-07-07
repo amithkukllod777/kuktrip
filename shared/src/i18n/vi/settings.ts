@@ -456,6 +456,8 @@ const settings: TranslationStrings = {
   'settings.offline.banner.syncing': 'Đang đồng bộ hóa {count}…',
   'settings.offline.banner.failed': 'Đồng bộ hóa không thành công: {count}',
   'settings.offline.banner.conflicts': 'Xung đột: {count}',
+  'settings.alwaysShowRoutes': 'Luôn hiển thị tuyến đường đặt chỗ',
+  'settings.alwaysShowRoutesHint': 'Tự động hiển thị trên bản đồ tuyến đường của mỗi chuyến bay, tàu hỏa và đặt chỗ khác, không cần bật riêng từng mục.',
 };
 
 export default settings;
