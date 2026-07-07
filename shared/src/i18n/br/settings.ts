@@ -454,6 +454,8 @@ const settings: TranslationStrings = {
   'settings.offline.banner.syncing': 'Sincronizando {count}…',
   'settings.offline.banner.failed': 'Falha ao sincronizar: {count}',
   'settings.offline.banner.conflicts': 'Conflitos: {count}',
+  'settings.alwaysShowRoutes': 'Sempre mostrar rotas de reserva',
+  'settings.alwaysShowRoutesHint': 'Mostra automaticamente no mapa a rota de cada voo, trem e outra reserva, sem precisar ativar item por item.',
 };
 
 export default settings;

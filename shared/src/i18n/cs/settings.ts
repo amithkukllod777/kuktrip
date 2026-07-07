@@ -451,6 +451,8 @@ const settings: TranslationStrings = {
   'settings.offline.banner.syncing': 'Synchronizace {count}…',
   'settings.offline.banner.failed': 'Synchronizace selhala: {count}',
   'settings.offline.banner.conflicts': 'Konflikty: {count}',
+  'settings.alwaysShowRoutes': 'Vždy zobrazovat trasy rezervací',
+  'settings.alwaysShowRoutesHint': 'Automaticky zobrazí na mapě trasu každého letu, vlaku a jiné rezervace, aniž byste ji museli zapínat jednotlivě.',
 };
 
 export default settings;

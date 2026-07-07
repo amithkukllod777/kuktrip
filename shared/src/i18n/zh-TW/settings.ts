@@ -436,6 +436,8 @@ const settings: TranslationStrings = {
   'settings.offline.banner.syncing': '正在同步 {count} 筆…',
   'settings.offline.banner.failed': '同步失敗：{count}',
   'settings.offline.banner.conflicts': '衝突：{count}',
+  'settings.alwaysShowRoutes': '一律顯示訂票路線',
+  'settings.alwaysShowRoutesHint': '自動在地圖上顯示每個航班、火車及其他預訂的路線,不需要逐一手動開啟。',
 };
 
 export default settings;

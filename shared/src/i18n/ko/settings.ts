@@ -447,6 +447,8 @@ const settings: TranslationStrings = {
   'settings.offline.banner.syncing': '{count}개 동기화 중…',
   'settings.offline.banner.failed': '동기화 실패: {count}',
   'settings.offline.banner.conflicts': '충돌: {count}',
+  'settings.alwaysShowRoutes': '예약 경로 항상 표시',
+  'settings.alwaysShowRoutesHint': '항공편, 기차 등 모든 예약의 경로를 개별적으로 켤 필요 없이 지도에 자동으로 표시합니다.',
 };
 
 export default settings;

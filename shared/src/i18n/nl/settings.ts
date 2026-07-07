@@ -455,6 +455,8 @@ const settings: TranslationStrings = {
   'settings.offline.banner.syncing': 'Synchroniseren {count}…',
   'settings.offline.banner.failed': 'Synchroniseren mislukt: {count}',
   'settings.offline.banner.conflicts': 'Conflicten: {count}',
+  'settings.alwaysShowRoutes': 'Boekingsroutes altijd tonen',
+  'settings.alwaysShowRoutesHint': 'Toont automatisch de route van elke vlucht, trein en andere boeking op de kaart, zonder dat u dit per boeking hoeft in te schakelen.',
 };
 
 export default settings;

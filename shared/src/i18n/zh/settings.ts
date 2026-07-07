@@ -434,6 +434,8 @@ const settings: TranslationStrings = {
   'settings.offline.banner.syncing': '正在同步 {count} 项…',
   'settings.offline.banner.failed': '同步失败：{count}',
   'settings.offline.banner.conflicts': '冲突：{count}',
+  'settings.alwaysShowRoutes': '始终显示预订路线',
+  'settings.alwaysShowRoutesHint': '自动在地图上显示每个航班、火车和其他预订的路线,无需逐个手动开启。',
 };
 
 export default settings;

@@ -456,6 +456,8 @@ const settings: TranslationStrings = {
   'settings.offline.banner.syncing': 'Synchronizowanie {count}…',
   'settings.offline.banner.failed': 'Nie udało się zsynchronizować: {count}',
   'settings.offline.banner.conflicts': 'Konflikty: {count}',
+  'settings.alwaysShowRoutes': 'Zawsze pokazuj trasy rezerwacji',
+  'settings.alwaysShowRoutesHint': 'Automatycznie pokazuje na mapie trasę każdego lotu, pociągu i innej rezerwacji, bez konieczności włączania jej pojedynczo.',
 };
 
 export default settings;

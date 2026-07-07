@@ -444,6 +444,8 @@ const settings: TranslationStrings = {
   'settings.offline.banner.syncing': 'جارٍ مزامنة {count}…',
   'settings.offline.banner.failed': 'فشلت المزامنة: {count}',
   'settings.offline.banner.conflicts': 'تعارضات: {count}',
+  'settings.alwaysShowRoutes': 'إظهار مسارات الحجوزات دائمًا',
+  'settings.alwaysShowRoutesHint': 'يعرض تلقائيًا مسار كل رحلة طيران وقطار وحجز آخر على الخريطة، دون الحاجة إلى تفعيله لكل عنصر على حدة.',
 };
 
 export default settings;

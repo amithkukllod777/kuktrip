@@ -432,6 +432,8 @@ const settings: TranslationStrings = {
   'settings.offline.banner.syncing': '{count} 件を同期中…',
   'settings.offline.banner.failed': '同期に失敗: {count}',
   'settings.offline.banner.conflicts': '競合: {count}',
+  'settings.alwaysShowRoutes': '予約ルートを常に表示',
+  'settings.alwaysShowRoutesHint': 'フライトや電車などすべての予約のルートを、個別にオンにしなくても地図上に自動的に表示します。',
 };
 
 export default settings;

@@ -463,6 +463,8 @@ const settings: TranslationStrings = {
   'settings.offline.banner.syncing': 'Συγχρονισμός {count}…',
   'settings.offline.banner.failed': 'Αποτυχία συγχρονισμού: {count}',
   'settings.offline.banner.conflicts': 'Διενέξεις: {count}',
+  'settings.alwaysShowRoutes': 'Πάντα εμφάνιση διαδρομών κράτησης',
+  'settings.alwaysShowRoutesHint': 'Εμφανίζει αυτόματα στον χάρτη τη διαδρομή κάθε πτήσης, τρένου και άλλης κράτησης, χωρίς να χρειάζεται να την ενεργοποιείτε μία προς μία.',
 };
 
 export default settings;

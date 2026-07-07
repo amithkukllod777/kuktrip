@@ -458,6 +458,8 @@ const settings: TranslationStrings = {
   'settings.offline.banner.syncing': 'Synchronisiert {count}…',
   'settings.offline.banner.failed': 'Synchronisierung fehlgeschlagen: {count}',
   'settings.offline.banner.conflicts': 'Konflikte: {count}',
+  'settings.alwaysShowRoutes': 'Buchungsrouten immer anzeigen',
+  'settings.alwaysShowRoutesHint': 'Zeigt die Route für jeden Flug, jede Zugfahrt und jede andere Buchung automatisch auf der Karte an – ohne sie einzeln aktivieren zu müssen.',
 };
 
 export default settings;
