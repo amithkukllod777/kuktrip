@@ -96,9 +96,9 @@ export default defineConfig({
         ],
       },
       manifest: {
-        name: 'TREK \u2014 Travel Planner',
-        short_name: 'TREK',
-        description: 'Travel Resource & Exploration Kit',
+        name: 'KukTrip — AI Travel Planner',
+        short_name: 'KukTrip',
+        description: 'Plan, organize and manage complete trips with KukTrip by Kuklabs.',
         theme_color: '#111827',
         background_color: '#0f172a',
         display: 'standalone',
