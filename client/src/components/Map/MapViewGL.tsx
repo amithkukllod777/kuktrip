@@ -18,6 +18,7 @@ import { useGeolocation } from '../../hooks/useGeolocation'
 import type { Place, Reservation } from '../../types'
 import { POI_CATEGORY_BY_KEY, type Poi } from './poiCategories'
 import { buildPoiPopupHtml } from './placePopup'
+import { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM } from '../../constants/mapDefaults'
 
 function categoryIconSvg(iconName: string | null | undefined, size: number): string {
   const IconComponent = (iconName && CATEGORY_ICON_MAP[iconName]) || CATEGORY_ICON_MAP['MapPin']
@@ -41,6 +42,10 @@ type PlaceWithCoords = Place & { lat: number; lng: number }
 
 function hasValidCoords(place: Place): place is PlaceWithCoords {
   return place.lat != null && place.lng != null && Number.isFinite(place.lat) && Number.isFinite(place.lng)
+}
+
+function isValidCoordinate(coord: [number, number] | null | undefined): coord is [number, number] {
+  return !!coord && Number.isFinite(coord[0]) && Number.isFinite(coord[1])
 }
 
 function buildPlaceClusterData(places: Place[]) {
@@ -191,8 +196,8 @@ export function MapViewGL({
   onMarkerClick,
   onMapClick,
   onMapContextMenu = null,
-  center = [48.8566, 2.3522],
-  zoom = 10,
+  center = DEFAULT_MAP_CENTER,
+  zoom = DEFAULT_MAP_ZOOM,
   fitKey = 0,
   dayOrderMap = {},
   leftWidth = 0,
@@ -258,8 +263,8 @@ export function MapViewGL({
   onReservationClickRef.current = onReservationClick
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const poiMarkersRef = useRef<any[]>([])
-  // Single reusable hover popup (name/category/address card) shared by planned
-  // places and POI markers — mirrors the Leaflet map's hover tooltip.
+  // Single reusable hover popup for POI markers. Planned places use the
+  // cursor-following React tooltip below so they match the Leaflet map.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const popupRef = useRef<any | null>(null)
   const onPoiClickRef = useRef(onPoiClick)
@@ -275,6 +280,11 @@ export function MapViewGL({
   onClickRefs.current.context = onMapContextMenu
   const hoverDisabledRef = useRef(hoverDisabled)
   hoverDisabledRef.current = hoverDisabled
+  const routeCoords = useMemo<[number, number][]>(() => (route || []).flat().filter(isValidCoordinate), [route])
+  const routeFitKey = useMemo(
+    () => routeCoords.map(([lat, lng]) => `${lat.toFixed(6)},${lng.toFixed(6)}`).join('|'),
+    [routeCoords],
+  )
 
   // Build/rebuild the map on provider/style/token/3d change
   useEffect(() => {
@@ -935,17 +945,29 @@ export function MapViewGL({
     return { top, right: rightWidth + 40, bottom, left: leftWidth + 40 }
   }, [leftWidth, rightWidth, hasInspector, hasDayDetail])
 
-  const prevFitKey = useRef(-1)
+  const prevFitKey = useRef<number | null>(-1)
+  const pendingRouteFitRef = useRef<{ fitKey: number | null; routeKey: string } | null>(null)
   useEffect(() => {
-    if (fitKey === prevFitKey.current) return
-    prevFitKey.current = fitKey
+    const fitKeyChanged = fitKey !== prevFitKey.current
+    const routeArrivedForPendingFit =
+      !fitKeyChanged
+      && pendingRouteFitRef.current?.fitKey === fitKey
+      && !!routeFitKey
+      && routeFitKey !== pendingRouteFitRef.current.routeKey
+    if (!fitKeyChanged && !routeArrivedForPendingFit) return
     const map = mapRef.current
     if (!map) return
+    if (fitKeyChanged) {
+      prevFitKey.current = fitKey
+      pendingRouteFitRef.current = { fitKey, routeKey: routeFitKey }
+    }
     const target = dayPlaces.length > 0 ? dayPlaces : places
-    const valid = target.filter(p => p.lat && p.lng)
-    if (valid.length === 0) return
+    const markerPoints = target.filter(hasValidCoords).map(p => [p.lat, p.lng] as [number, number])
+    const fitPoints = routeCoords.length > 0 ? [...routeCoords, ...markerPoints] : markerPoints
+    if (fitPoints.length === 0) return
     const bounds = new gl.LngLatBounds()
-    valid.forEach(p => bounds.extend([p.lng, p.lat]))
+    fitPoints.forEach(([lat, lng]) => bounds.extend([lng, lat]))
+    let fitted = false
     const run = () => {
       try {
         map.fitBounds(bounds, {
@@ -954,11 +976,13 @@ export function MapViewGL({
           pitch: enableMapbox3d ? 45 : 0,
           duration: 400,
         })
+        fitted = true
       } catch { /* noop */ }
     }
-    if (map.loaded()) run()
-    else map.once('load', run)
-  }, [fitKey]) // eslint-disable-line react-hooks/exhaustive-deps
+    run()
+    if (!fitted && typeof map.once === 'function') map.once('load', run)
+    if (routeArrivedForPendingFit) pendingRouteFitRef.current = null
+  }, [fitKey, routeFitKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // flyTo selected place
   useEffect(() => {

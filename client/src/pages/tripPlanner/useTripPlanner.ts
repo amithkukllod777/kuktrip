@@ -23,6 +23,7 @@ import { usePlannerHistory } from '../../hooks/usePlannerHistory'
 import { useAirtrailConnection } from '../../hooks/useAirtrailConnection'
 import { usePluginStore } from '../../store/pluginStore'
 import type { Accommodation, TripMember, Day, Place, Reservation } from '../../types'
+import { DEFAULT_MAP_LAT, DEFAULT_MAP_LNG, DEFAULT_MAP_ZOOM } from '../../constants/mapDefaults'
 import { resolvePoolAssignmentId } from './tripPlannerModel'
 
 /**
@@ -351,12 +352,11 @@ export function useTripPlanner() {
   const { route, routeSegments, routeInfo, setRoute, setRouteInfo, updateRouteForDay } = useRouteCalculation({ assignments } as any, selectedDayId, routeShown, routeProfile, tripAccommodations)
 
   const handleSelectDay = useCallback((dayId: number | null, skipFit?: boolean) => {
-    const changed = dayId !== selectedDayId
     tripActions.setSelectedDay(dayId)
-    if (changed && !skipFit) setFitKey(k => k + 1)
+    if (!skipFit) setFitKey(k => k + 1)
     setMobileSidebarOpen(null)
     updateRouteForDay(dayId)
-  }, [updateRouteForDay, selectedDayId])
+  }, [updateRouteForDay])
 
   const handlePlaceClick = useCallback((placeId: number | null, assignmentId?: number | null) => {
     if (assignmentId) {
@@ -870,8 +870,8 @@ export function useTripPlanner() {
   }, [selectedDayId, assignments])
 
   const mapTileUrl = settings.map_tile_url || 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
-  const defaultCenter = [settings.default_lat || 48.8566, settings.default_lng || 2.3522]
-  const defaultZoom = settings.default_zoom || 10
+  const defaultCenter = [settings.default_lat ?? DEFAULT_MAP_LAT, settings.default_lng ?? DEFAULT_MAP_LNG]
+  const defaultZoom = settings.default_zoom ?? DEFAULT_MAP_ZOOM
 
   const fontStyle = { fontFamily: "var(--font-system)" }
 
