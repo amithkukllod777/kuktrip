@@ -136,13 +136,13 @@ describe('LoginPage', () => {
   });
 
   describe('FE-PAGE-LOGIN-005: Registration toggle visible', () => {
-    it('shows a Register button to switch to registration mode', async () => {
+    it('shows a Sign Up tab to switch to registration mode', async () => {
       // Default appConfig has allow_registration: true, has_users: true
       render(<LoginPage />);
 
       await waitFor(() => {
-        // The register toggle link text appears
-        expect(screen.getByRole('button', { name: /^register$/i })).toBeInTheDocument();
+        // The Login / Sign Up tabs appear (KUKLABS_IDENTITY.md §15)
+        expect(screen.getByRole('tab', { name: /sign up/i })).toBeInTheDocument();
       });
     });
   });
@@ -153,10 +153,10 @@ describe('LoginPage', () => {
       render(<LoginPage />);
 
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /^register$/i })).toBeInTheDocument();
+        expect(screen.getByRole('tab', { name: /sign up/i })).toBeInTheDocument();
       });
 
-      await user.click(screen.getByRole('button', { name: /^register$/i }));
+      await user.click(screen.getByRole('tab', { name: /sign up/i }));
 
       // Username field appears in register mode
       await waitFor(() => {
@@ -575,10 +575,10 @@ describe('LoginPage', () => {
       render(<LoginPage />);
 
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /^register$/i })).toBeInTheDocument();
+        expect(screen.getByRole('tab', { name: /sign up/i })).toBeInTheDocument();
       });
 
-      await user.click(screen.getByRole('button', { name: /^register$/i }));
+      await user.click(screen.getByRole('tab', { name: /sign up/i }));
 
       await waitFor(() => {
         expect(screen.getByPlaceholderText('admin')).toBeInTheDocument();
