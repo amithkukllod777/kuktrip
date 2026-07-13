@@ -3,37 +3,52 @@ import { SUPPORTED_LANGUAGES, useTranslation } from '../i18n'
 import { Eye, EyeOff, Mail, Lock, User, Globe, ChevronDown, Shield, KeyRound, Fingerprint, Plane } from 'lucide-react'
 import { useLogin } from './login/useLogin'
 import ToggleSwitch from '../components/Settings/ToggleSwitch'
+import { productBrand } from '../config/productBrand'
+import { kuklabsTokens as K } from '../design-system/kuklabsTokens'
 
-// Kuklabs identity standard (KUKLABS_IDENTITY.md §6/§15): one approved product
-// accent per product. KukTrip's accent is the family blue (accent-600).
-const ACCENT = '#2563EB'
+// Kuklabs universal auth shell (KUKLABS_UI_AUTH_AGENT_PACK_V2). Layout, sizing,
+// typography and colours come from the shared standard + design tokens; only
+// productBrand (icon, name, tagline, accent) differs per product.
+const ACCENT = productBrand.accentColor // approved product accent (accent-600)
 const ACCENT_HOVER = '#1D4ED8'
 const ACCENT_SUBTLE = '#EFF4FF'
+const C = K.colors
+const A = K.authPage
+const R = K.radius.authControl // 16
+const FONT = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
 
-/** KukTrip product app icon — rounded-square (radius per §7.3) with a white
- *  paper-plane glyph on the product accent gradient. Kept inline so the auth
- *  screen stays self-contained. */
-function KukTripMark({ size = 72 }: { size?: number }): React.ReactElement {
+/** KukTrip product app icon — the real KukTrip "K" mark (public/icons/icon.svg),
+ *  the same asset used for the favicon / PWA icon. Uses the product icon, never
+ *  the Kuklabs corporate logo. */
+function ProductMark({ size = A.productIcon }: { size?: number }): React.ReactElement {
   return (
-    <svg width={size} height={size} viewBox="0 0 96 96" fill="none" role="img" aria-label="KukTrip">
-      <defs>
-        <linearGradient id="ktMark" x1="0" y1="0" x2="96" y2="96" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#3B82F6" />
-          <stop offset="1" stopColor={ACCENT} />
-        </linearGradient>
-      </defs>
-      <rect width="96" height="96" rx="24" fill="url(#ktMark)" />
-      <path d="M74 24 L20 46 L43 53 L50 74 L61 55 L74 24 Z" fill="#fff" />
-      <path d="M43 53 L74 24 L52 58 Z" fill="#fff" fillOpacity="0.72" />
+    <img
+      src="/icons/icon.svg"
+      width={size}
+      height={size}
+      alt={productBrand.productName}
+      style={{ display: 'block', borderRadius: K.radius.productIcon, boxShadow: '0 8px 24px rgba(37,99,235,0.18)' }}
+    />
+  )
+}
+
+/** Official Google multicolour "G" (mandatory per pack — never restyled). */
+function GoogleG({ size = 18 }: { size?: number }): React.ReactElement {
+  return (
+    <svg width={size} height={size} viewBox="0 0 48 48" aria-hidden="true">
+      <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+      <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+      <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
     </svg>
   )
 }
 
-/** "Kuk" (neutral) + "Trip" (accent) product wordmark, per §15 / §19.1. */
-function ProductName({ size }: { size: number }): React.ReactElement {
+/** "Kuk" (neutral) + "Trip" (accent) product wordmark. */
+function ProductName(): React.ReactElement {
   return (
-    <h1 style={{ margin: 0, fontSize: `calc(${size}px * var(--fs-scale-title, 1))`, fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.05, color: '#101828' }}>
-      Kuk<span style={{ color: ACCENT }}>Trip</span>
+    <h1 style={{ margin: 0, fontSize: `calc(${A.productName.size}px * var(--fs-scale-title, 1))`, fontWeight: A.productName.weight, letterSpacing: '-0.02em', lineHeight: `${A.productName.lineHeight}px`, color: C.textPrimary }}>
+      Kuk<span style={{ color: ACCENT }}>{productBrand.shortName}</span>
     </h1>
   )
 }
@@ -56,22 +71,37 @@ export default function LoginPage(): React.ReactElement {
   const oidcButtonShown = !!(appConfig?.oidc_configured && appConfig?.oidc_login && !oidcOnly)
   const passkeyAvailable = !!(appConfig?.passkey_login && appConfig?.passkey_configured && !oidcOnly
     && mode === 'login' && !mfaStep && !passwordChangeStep)
+  // The Kuklabs standard federated button is "Continue with Google". KukTrip's
+  // federated login is generic OIDC; when the configured provider is Google we
+  // render the official Google button, otherwise the provider-generic SSO button.
+  const isGoogleProvider = /google/i.test(appConfig?.oidc_display_name || '')
 
-  // Login / Sign Up tabs (§15) — only in the plain login/register state where
+  // Login / Sign Up tabs — only in the plain login/register state where
   // switching modes is actually offered.
   const showTabs = !!(showRegisterOption && appConfig?.has_users && !appConfig?.demo_mode && !mfaStep && !passwordChangeStep && !oidcOnly)
 
   const inputBase: React.CSSProperties = {
-    width: '100%', padding: '15px 14px 15px 44px', border: '1px solid #D0D5DD',
-    borderRadius: 12, fontSize: 'calc(15px * var(--fs-scale-body, 1))', fontFamily: 'inherit', outline: 'none',
-    color: '#101828', background: 'white', boxSizing: 'border-box', transition: 'border-color 0.15s, box-shadow 0.15s',
+    width: '100%', height: A.inputHeight, padding: '0 14px 0 46px', border: `1px solid ${C.border}`,
+    borderRadius: R, fontSize: `calc(${A.inputText.size}px * var(--fs-scale-body, 1))`, fontFamily: 'inherit', outline: 'none',
+    color: C.textPrimary, background: C.surface, boxSizing: 'border-box', transition: 'border-color 0.15s, box-shadow 0.15s',
   }
   const focusOn = (e: React.FocusEvent<HTMLInputElement>) => { e.target.style.borderColor = ACCENT; e.target.style.boxShadow = `0 0 0 3px ${ACCENT_SUBTLE}` }
-  const focusOff = (e: React.FocusEvent<HTMLInputElement>) => { e.target.style.borderColor = '#D0D5DD'; e.target.style.boxShadow = 'none' }
+  const focusOff = (e: React.FocusEvent<HTMLInputElement>) => { e.target.style.borderColor = C.border; e.target.style.boxShadow = 'none' }
+
+  // Shared style for a full-width secondary (federated / passkey) button.
+  const secondaryBtn: React.CSSProperties = {
+    marginTop: 14, width: '100%', height: A.googleButtonHeight,
+    background: C.surface, color: C.textPrimary,
+    border: `1px solid ${C.border}`, borderRadius: R,
+    fontSize: `calc(${A.primaryButtonText.size}px * var(--fs-scale-body, 1))`, fontWeight: 600,
+    fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+    textDecoration: 'none', cursor: 'pointer', boxSizing: 'border-box',
+    transition: 'background 180ms cubic-bezier(0.23,1,0.32,1), border-color 180ms cubic-bezier(0.23,1,0.32,1)',
+  }
 
   if (showTakeoff) {
     return (
-      <div className="takeoff-overlay" style={{ position: 'fixed', inset: 0, zIndex: 99999, overflow: 'hidden' }}>
+      <div className="takeoff-overlay" style={{ position: 'fixed', inset: 0, zIndex: 99999, overflow: 'hidden', fontFamily: FONT }}>
         {/* Sky gradient */}
         <div className="takeoff-sky" style={{ position: 'absolute', inset: 0 }} />
 
@@ -143,9 +173,9 @@ export default function LoginPage(): React.ReactElement {
           position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
           display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14,
         }}>
-          <KukTripMark size={80} />
+          <ProductMark size={80} />
           <h1 style={{ margin: 0, fontSize: 'calc(40px * var(--fs-scale-title, 1))', fontWeight: 800, letterSpacing: '-0.02em', color: 'white' }}>
-            Kuk<span style={{ color: '#93C5FD' }}>Trip</span>
+            Kuk<span style={{ color: '#93C5FD' }}>{productBrand.shortName}</span>
           </h1>
         </div>
 
@@ -222,10 +252,18 @@ export default function LoginPage(): React.ReactElement {
     )
   }
 
-  return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', background: '#F8FAFC', fontFamily: 'var(--font-system)', position: 'relative', padding: '20px 16px 32px' }}>
+  const orDivider = (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 20 }}>
+      <div style={{ flex: 1, height: 1, background: C.dividerSoft }} />
+      <span style={{ fontSize: `calc(13px * var(--fs-scale-body, 1))`, color: C.placeholder }}>{t('common.or')}</span>
+      <div style={{ flex: 1, height: 1, background: C.dividerSoft }} />
+    </div>
+  )
 
-      {/* Language dropdown (§22 accessible control) */}
+  return (
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', background: C.background, fontFamily: FONT, position: 'relative', padding: `20px ${A.horizontalPaddingMobile}px 32px` }}>
+
+      {/* Language dropdown (accessible control) */}
       <div style={{ position: 'absolute', top: 16, right: 16, zIndex: 10 }}>
         <button
           onClick={(e) => { e.stopPropagation(); setLangDropdownOpen(o => !o) }}
@@ -236,7 +274,7 @@ export default function LoginPage(): React.ReactElement {
             display: 'flex', alignItems: 'center', gap: 6,
             padding: '8px 12px', borderRadius: 999,
             background: 'rgba(16,24,40,0.05)', border: 'none',
-            fontSize: 'calc(13px * var(--fs-scale-body, 1))', fontWeight: 500, color: '#475467',
+            fontSize: `calc(13px * var(--fs-scale-body, 1))`, fontWeight: 500, color: C.textSecondary,
             cursor: 'pointer', fontFamily: 'inherit', minHeight: 40,
             transition: 'background 0.15s',
           }}
@@ -255,9 +293,9 @@ export default function LoginPage(): React.ReactElement {
             onClick={(e) => e.stopPropagation()}
             style={{
               position: 'absolute', top: '100%', right: 0, marginTop: 4,
-              background: 'white', borderRadius: 12,
+              background: C.surface, borderRadius: 12,
               boxShadow: '0 4px 24px rgba(16,24,40,0.12)',
-              border: '1px solid #EAECF0',
+              border: `1px solid ${C.dividerSoft}`,
               minWidth: 190, maxHeight: 320, overflowY: 'auto',
             }}
           >
@@ -271,12 +309,12 @@ export default function LoginPage(): React.ReactElement {
                   display: 'block', width: '100%', textAlign: 'left',
                   padding: '10px 16px', border: 'none',
                   background: value === language ? ACCENT_SUBTLE : 'transparent',
-                  color: value === language ? ACCENT : '#475467',
+                  color: value === language ? ACCENT : C.textSecondary,
                   fontWeight: value === language ? 600 : 400,
-                  fontSize: 'calc(14px * var(--fs-scale-body, 1))', cursor: 'pointer', fontFamily: 'inherit',
+                  fontSize: `calc(14px * var(--fs-scale-body, 1))`, cursor: 'pointer', fontFamily: 'inherit',
                   transition: 'background 0.1s',
                 }}
-                onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => { if (value !== language) e.currentTarget.style.background = '#F2F4F7' }}
+                onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => { if (value !== language) e.currentTarget.style.background = C.surfaceSecondary }}
                 onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => { if (value !== language) e.currentTarget.style.background = 'transparent' }}
               >
                 {label}
@@ -286,34 +324,34 @@ export default function LoginPage(): React.ReactElement {
         )}
       </div>
 
-      {/* Centered auth column (§15) */}
-      <div style={{ width: '100%', maxWidth: 420, margin: 'auto 0', display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
+      {/* Centered auth column */}
+      <div style={{ width: '100%', maxWidth: A.contentMaxWidthMobile, margin: 'auto 0', display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
 
         {/* Product icon + Welcome to + Product name + tagline */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: 28 }}>
-          <KukTripMark size={72} />
-          <p style={{ margin: '18px 0 2px', fontSize: 'calc(22px * var(--fs-scale-subtitle, 1))', fontWeight: 500, color: '#101828' }}>{t('login.welcomeTo')}</p>
-          <ProductName size={40} />
-          <p style={{ margin: '12px 0 0', fontSize: 'calc(15px * var(--fs-scale-subtitle, 1))', color: '#475467', lineHeight: 1.5, maxWidth: 360 }}>
+          <ProductMark />
+          <p style={{ margin: '18px 0 2px', fontSize: `calc(${A.welcomeText.size}px * var(--fs-scale-subtitle, 1))`, lineHeight: `${A.welcomeText.lineHeight}px`, fontWeight: A.welcomeText.weight, color: C.textPrimary }}>{t('login.welcomeTo')}</p>
+          <ProductName />
+          <p style={{ margin: '12px 0 0', fontSize: `calc(${A.tagline.size}px * var(--fs-scale-subtitle, 1))`, color: C.textSecondary, lineHeight: 1.5, maxWidth: 360 }}>
             {t('login.productTagline')}
           </p>
         </div>
 
         {oidcOnly ? (
-          <div style={{ background: 'white', borderRadius: 16, border: '1px solid #EAECF0', padding: '28px 24px', boxShadow: '0 1px 3px rgba(16,24,40,0.06)' }}>
-            <h2 style={{ margin: '0 0 4px', fontSize: 'calc(20px * var(--fs-scale-title, 1))', fontWeight: 700, color: '#101828' }}>{t('login.title')}</h2>
-            <p style={{ margin: '0 0 20px', fontSize: 'calc(14px * var(--fs-scale-body, 1))', color: '#667085' }}>{noRedirect ? t('login.oidcLoggedOut') : t('login.oidcOnly')}</p>
+          <div style={{ background: C.surface, borderRadius: R, border: `1px solid ${C.dividerSoft}`, padding: '28px 24px', boxShadow: '0 1px 3px rgba(16,24,40,0.06)' }}>
+            <h2 style={{ margin: '0 0 4px', fontSize: `calc(20px * var(--fs-scale-title, 1))`, fontWeight: 700, color: C.textPrimary }}>{t('login.title')}</h2>
+            <p style={{ margin: '0 0 20px', fontSize: `calc(14px * var(--fs-scale-body, 1))`, color: C.textMuted }}>{noRedirect ? t('login.oidcLoggedOut') : t('login.oidcOnly')}</p>
             {error && (
-              <div role="alert" style={{ padding: '10px 14px', background: '#FEF3F2', border: '1px solid #FECDCA', borderRadius: 10, fontSize: 'calc(13px * var(--fs-scale-body, 1))', color: '#B42318', marginBottom: 16 }}>
+              <div role="alert" style={{ padding: '10px 14px', background: '#FEF3F2', border: '1px solid #FECDCA', borderRadius: 10, fontSize: `calc(13px * var(--fs-scale-body, 1))`, color: '#B42318', marginBottom: 16 }}>
                 {error}
               </div>
             )}
             <a href={`/api/auth/oidc/login${inviteToken ? '?invite=' + encodeURIComponent(inviteToken) : ''}`}
               style={{
-                width: '100%', padding: '14px',
+                width: '100%', height: A.buttonHeight,
                 background: ACCENT, color: 'white',
-                border: 'none', borderRadius: 12,
-                fontSize: 'calc(15px * var(--fs-scale-body, 1))', fontWeight: 600, cursor: 'pointer',
+                border: 'none', borderRadius: R,
+                fontSize: `calc(${A.primaryButtonText.size}px * var(--fs-scale-body, 1))`, fontWeight: 600, cursor: 'pointer',
                 fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                 textDecoration: 'none', transition: 'background 180ms cubic-bezier(0.23,1,0.32,1)',
                 boxSizing: 'border-box',
@@ -321,50 +359,52 @@ export default function LoginPage(): React.ReactElement {
               onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.background = ACCENT_HOVER }}
               onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.background = ACCENT }}
             >
-              <Shield size={16} />
-              {t('login.oidcSignIn', { name: appConfig?.oidc_display_name || 'SSO' })}
+              {isGoogleProvider ? <GoogleG size={18} /> : <Shield size={16} />}
+              {isGoogleProvider ? t('login.continueWithGoogle') : t('login.oidcSignIn', { name: appConfig?.oidc_display_name || 'SSO' })}
             </a>
           </div>
         ) : (
           <>
-            {/* Login / Sign Up tabs */}
+            {/* Login / Sign Up tabs (underline indicator, per approved reference) */}
             {showTabs && (
-              <div role="tablist" aria-label={t('login.title')} style={{ display: 'flex', background: 'white', border: '1px solid #EAECF0', borderRadius: 12, padding: 5, marginBottom: 16, boxShadow: '0 1px 2px rgba(16,24,40,0.04)' }}>
-                {(['login', 'register'] as const).map(m => {
+              <div role="tablist" aria-label={t('login.title')} style={{ display: 'flex', alignItems: 'stretch', height: A.tabsHeight, background: C.surface, border: `1px solid ${C.dividerSoft}`, borderRadius: R, marginBottom: 16, boxShadow: '0 1px 2px rgba(16,24,40,0.04)', overflow: 'hidden' }}>
+                {(['login', 'register'] as const).map((m, idx) => {
                   const active = mode === m
                   return (
-                    <button
-                      key={m}
-                      role="tab"
-                      aria-selected={active}
-                      onClick={() => { setMode(m); setError(''); setMfaStep(false); setMfaToken(''); setMfaCode('') }}
-                      style={{
-                        flex: 1, padding: '11px 12px', borderRadius: 9, border: 'none', cursor: 'pointer',
-                        fontFamily: 'inherit', fontSize: 'calc(15px * var(--fs-scale-body, 1))', fontWeight: 600,
-                        background: active ? ACCENT_SUBTLE : 'transparent',
-                        color: active ? ACCENT : '#667085',
-                        transition: 'background 150ms, color 150ms',
-                      }}
-                    >
-                      {m === 'login' ? t('login.tabLogin') : t('login.tabSignUp')}
-                    </button>
+                    <React.Fragment key={m}>
+                      {idx === 1 && <div aria-hidden="true" style={{ width: 1, alignSelf: 'center', height: 24, background: C.dividerSoft }} />}
+                      <button
+                        role="tab"
+                        aria-selected={active}
+                        onClick={() => { setMode(m); setError(''); setMfaStep(false); setMfaToken(''); setMfaCode('') }}
+                        style={{
+                          flex: 1, border: 'none', cursor: 'pointer', background: 'transparent',
+                          fontFamily: 'inherit', fontSize: `calc(${A.tabLabel.size}px * var(--fs-scale-body, 1))`, fontWeight: A.tabLabel.weight,
+                          color: active ? ACCENT : C.textSecondary,
+                          borderBottom: active ? `2px solid ${ACCENT}` : '2px solid transparent',
+                          transition: 'color 150ms, border-color 150ms',
+                        }}
+                      >
+                        {m === 'login' ? t('login.tabLogin') : t('login.tabSignUp')}
+                      </button>
+                    </React.Fragment>
                   )
                 })}
               </div>
             )}
 
-            <div style={{ background: 'white', borderRadius: 16, border: '1px solid #EAECF0', padding: '24px 24px 26px', boxShadow: '0 1px 3px rgba(16,24,40,0.06)' }}>
+            <div style={{ background: C.surface, borderRadius: R, border: `1px solid ${C.dividerSoft}`, padding: '24px 24px 26px', boxShadow: '0 1px 3px rgba(16,24,40,0.06)' }}>
               {/* Contextual heading for step-up / special states */}
               {(passwordChangeStep || (mode === 'login' && mfaStep) || (mode === 'register' && !showTabs)) && (
                 <div style={{ marginBottom: 18 }}>
-                  <h2 style={{ margin: '0 0 4px', fontSize: 'calc(19px * var(--fs-scale-title, 1))', fontWeight: 700, color: '#101828' }}>
+                  <h2 style={{ margin: '0 0 4px', fontSize: `calc(19px * var(--fs-scale-title, 1))`, fontWeight: 700, color: C.textPrimary }}>
                     {passwordChangeStep
                       ? t('login.setNewPassword')
                       : mode === 'login' && mfaStep
                         ? t('login.mfaTitle')
                         : (!appConfig?.has_users ? t('login.createAdmin') : t('login.createAccount'))}
                   </h2>
-                  <p style={{ margin: 0, fontSize: 'calc(14px * var(--fs-scale-body, 1))', color: '#667085' }}>
+                  <p style={{ margin: 0, fontSize: `calc(14px * var(--fs-scale-body, 1))`, color: C.textMuted }}>
                     {passwordChangeStep
                       ? t('login.setNewPasswordHint')
                       : mode === 'login' && mfaStep
@@ -376,13 +416,13 @@ export default function LoginPage(): React.ReactElement {
 
               <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 {error && (
-                  <div role="alert" style={{ padding: '10px 14px', background: '#FEF3F2', border: '1px solid #FECDCA', borderRadius: 10, fontSize: 'calc(13px * var(--fs-scale-body, 1))', color: '#B42318' }}>
+                  <div role="alert" style={{ padding: '10px 14px', background: '#FEF3F2', border: '1px solid #FECDCA', borderRadius: 10, fontSize: `calc(13px * var(--fs-scale-body, 1))`, color: '#B42318' }}>
                     {error}
                   </div>
                 )}
 
                 {insecureCookie && (
-                  <div style={{ padding: '12px 14px', background: '#FFFAEB', border: '1px solid #FEDF89', borderRadius: 10, fontSize: 'calc(13px * var(--fs-scale-body, 1))', color: '#B54708' }}>
+                  <div style={{ padding: '12px 14px', background: '#FFFAEB', border: '1px solid #FEDF89', borderRadius: 10, fontSize: `calc(13px * var(--fs-scale-body, 1))`, color: '#B54708' }}>
                     <div style={{ fontWeight: 700, marginBottom: 4 }}>{t('login.insecureCookie.title')}</div>
                     <div style={{ lineHeight: 1.55 }}>{t('login.insecureCookie.body')}</div>
                     <a href="https://github.com/mauriceboe/TREK/wiki/Troubleshooting" target="_blank" rel="noopener noreferrer"
@@ -394,13 +434,13 @@ export default function LoginPage(): React.ReactElement {
 
                 {passwordChangeStep && (
                   <>
-                    <div style={{ padding: '10px 14px', background: '#FFFAEB', border: '1px solid #FEDF89', borderRadius: 10, fontSize: 'calc(13px * var(--fs-scale-body, 1))', color: '#B54708' }}>
+                    <div style={{ padding: '10px 14px', background: '#FFFAEB', border: '1px solid #FEDF89', borderRadius: 10, fontSize: `calc(13px * var(--fs-scale-body, 1))`, color: '#B54708' }}>
                       {t('settings.mustChangePassword')}
                     </div>
                     <div>
-                      <label style={{ display: 'block', fontSize: 'calc(14px * var(--fs-scale-body, 1))', fontWeight: 500, color: '#344054', marginBottom: 6 }}>{t('settings.newPassword')}</label>
+                      <label style={{ display: 'block', fontSize: `calc(14px * var(--fs-scale-body, 1))`, fontWeight: 500, color: '#344054', marginBottom: 6 }}>{t('settings.newPassword')}</label>
                       <div style={{ position: 'relative' }}>
-                        <Lock size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#98A2B3' }} />
+                        <Lock size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: C.placeholder }} />
                         <input
                           type="password" value={newPassword} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewPassword(e.target.value)} required
                           placeholder={t('settings.newPassword')} style={inputBase}
@@ -409,9 +449,9 @@ export default function LoginPage(): React.ReactElement {
                       </div>
                     </div>
                     <div>
-                      <label style={{ display: 'block', fontSize: 'calc(14px * var(--fs-scale-body, 1))', fontWeight: 500, color: '#344054', marginBottom: 6 }}>{t('settings.confirmPassword')}</label>
+                      <label style={{ display: 'block', fontSize: `calc(14px * var(--fs-scale-body, 1))`, fontWeight: 500, color: '#344054', marginBottom: 6 }}>{t('settings.confirmPassword')}</label>
                       <div style={{ position: 'relative' }}>
-                        <Lock size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#98A2B3' }} />
+                        <Lock size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: C.placeholder }} />
                         <input
                           type="password" value={confirmPassword} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConfirmPassword(e.target.value)} required
                           placeholder={t('settings.confirmPassword')} style={inputBase}
@@ -424,9 +464,9 @@ export default function LoginPage(): React.ReactElement {
 
                 {mode === 'login' && mfaStep && !passwordChangeStep && (
                   <div>
-                    <label style={{ display: 'block', fontSize: 'calc(14px * var(--fs-scale-body, 1))', fontWeight: 500, color: '#344054', marginBottom: 6 }}>{t('login.mfaCodeLabel')}</label>
+                    <label style={{ display: 'block', fontSize: `calc(14px * var(--fs-scale-body, 1))`, fontWeight: 500, color: '#344054', marginBottom: 6 }}>{t('login.mfaCodeLabel')}</label>
                     <div style={{ position: 'relative' }}>
-                      <KeyRound size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#98A2B3' }} />
+                      <KeyRound size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: C.placeholder }} />
                       <input
                         type="text"
                         inputMode="text"
@@ -440,11 +480,11 @@ export default function LoginPage(): React.ReactElement {
                         onFocus={focusOn} onBlur={focusOff}
                       />
                     </div>
-                    <p style={{ fontSize: 'calc(13px * var(--fs-scale-body, 1))', color: '#667085', marginTop: 8 }}>{t('login.mfaHint')}</p>
+                    <p style={{ fontSize: `calc(13px * var(--fs-scale-body, 1))`, color: C.textMuted, marginTop: 8 }}>{t('login.mfaHint')}</p>
                     <button
                       type="button"
                       onClick={() => { setMfaStep(false); setMfaToken(''); setMfaCode(''); setError('') }}
-                      style={{ marginTop: 8, background: 'none', border: 'none', color: '#667085', fontSize: 'calc(13px * var(--fs-scale-body, 1))', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
+                      style={{ marginTop: 8, background: 'none', border: 'none', color: C.textMuted, fontSize: `calc(13px * var(--fs-scale-body, 1))`, cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
                     >
                       {t('login.mfaBack')}
                     </button>
@@ -454,9 +494,9 @@ export default function LoginPage(): React.ReactElement {
                 {/* Full Name / username (register only) */}
                 {mode === 'register' && !passwordChangeStep && (
                   <div>
-                    <label style={{ display: 'block', fontSize: 'calc(14px * var(--fs-scale-body, 1))', fontWeight: 500, color: '#344054', marginBottom: 6 }}>{t('login.username')}</label>
+                    <label style={{ display: 'block', fontSize: `calc(14px * var(--fs-scale-body, 1))`, fontWeight: 500, color: '#344054', marginBottom: 6 }}>{t('login.username')}</label>
                     <div style={{ position: 'relative' }}>
-                      <User size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#98A2B3' }} />
+                      <User size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: C.placeholder }} />
                       <input
                         type="text" value={username} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)} required
                         placeholder="admin" style={inputBase}
@@ -469,9 +509,9 @@ export default function LoginPage(): React.ReactElement {
                 {/* Email */}
                 {!(mode === 'login' && mfaStep) && !passwordChangeStep && (
                   <div>
-                    <label style={{ display: 'block', fontSize: 'calc(14px * var(--fs-scale-body, 1))', fontWeight: 500, color: '#344054', marginBottom: 6 }}>{t('common.email')}</label>
+                    <label style={{ display: 'block', fontSize: `calc(14px * var(--fs-scale-body, 1))`, fontWeight: 500, color: '#344054', marginBottom: 6 }}>{t('common.email')}</label>
                     <div style={{ position: 'relative' }}>
-                      <Mail size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#98A2B3' }} />
+                      <Mail size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: C.placeholder }} />
                       <input
                         type="email" value={email} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)} required
                         placeholder={t('login.emailPlaceholder')} style={inputBase}
@@ -484,9 +524,9 @@ export default function LoginPage(): React.ReactElement {
                 {/* Password */}
                 {!(mode === 'login' && mfaStep) && !passwordChangeStep && (
                   <div>
-                    <label style={{ display: 'block', fontSize: 'calc(14px * var(--fs-scale-body, 1))', fontWeight: 500, color: '#344054', marginBottom: 6 }}>{t('common.password')}</label>
+                    <label style={{ display: 'block', fontSize: `calc(14px * var(--fs-scale-body, 1))`, fontWeight: 500, color: '#344054', marginBottom: 6 }}>{t('common.password')}</label>
                     <div style={{ position: 'relative' }}>
-                      <Lock size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#98A2B3' }} />
+                      <Lock size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: C.placeholder }} />
                       <input
                         type={showPassword ? 'text' : 'password'} value={password} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)} required
                         placeholder="••••••••" style={{ ...inputBase, paddingRight: 46 }}
@@ -496,7 +536,7 @@ export default function LoginPage(): React.ReactElement {
                         aria-label={showPassword ? 'Hide password' : 'Show password'}
                         style={{
                           position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
-                          background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: '#98A2B3',
+                          background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: C.placeholder,
                           width: 24, height: 24,
                         }}>
                         <Eye size={17} style={{
@@ -519,14 +559,14 @@ export default function LoginPage(): React.ReactElement {
                           <ToggleSwitch on={rememberMe} onToggle={() => setRememberMe(!rememberMe)} label={t('login.rememberMe')} />
                           <span
                             onClick={() => setRememberMe(!rememberMe)}
-                            style={{ cursor: 'pointer', color: '#344054', fontSize: 'calc(13px * var(--fs-scale-body, 1))', fontWeight: 500, userSelect: 'none' }}
+                            style={{ cursor: 'pointer', color: '#344054', fontSize: `calc(13px * var(--fs-scale-body, 1))`, fontWeight: 500, userSelect: 'none' }}
                           >
                             {t('login.rememberMe')}
                           </span>
                         </div>
                         <button type="button" onClick={() => navigate('/forgot-password')} style={{
                           background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-                          color: ACCENT, fontSize: 'calc(13px * var(--fs-scale-body, 1))', fontWeight: 600, fontFamily: 'inherit',
+                          color: ACCENT, fontSize: `calc(13px * var(--fs-scale-body, 1))`, fontWeight: 600, fontFamily: 'inherit',
                         }}>{t('login.forgotPassword')}</button>
                       </div>
                     )}
@@ -534,8 +574,8 @@ export default function LoginPage(): React.ReactElement {
                 )}
 
                 <button type="submit" disabled={isLoading} style={{
-                  marginTop: 4, width: '100%', padding: '14px', background: ACCENT, color: 'white',
-                  border: 'none', borderRadius: 12, fontSize: 'calc(15px * var(--fs-scale-body, 1))', fontWeight: 600, cursor: isLoading ? 'default' : 'pointer',
+                  marginTop: 4, width: '100%', height: A.buttonHeight, background: ACCENT, color: 'white',
+                  border: 'none', borderRadius: R, fontSize: `calc(${A.primaryButtonText.size}px * var(--fs-scale-body, 1))`, fontWeight: 600, cursor: isLoading ? 'default' : 'pointer',
                   fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                   opacity: isLoading ? 0.7 : 1, transition: 'background 0.15s, opacity 0.15s',
                 }}
@@ -544,7 +584,7 @@ export default function LoginPage(): React.ReactElement {
                 >
                   {isLoading
                     ? <><div style={{ width: 15, height: 15, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />{passwordChangeStep ? t('settings.updatePassword') : mode === 'register' ? t('login.creating') : (mode === 'login' && mfaStep ? t('login.mfaVerify') : t('login.signingIn'))}</>
-                    : <>{passwordChangeStep ? t('settings.updatePassword') : mode === 'register' ? t('login.createAccount') : (mode === 'login' && mfaStep ? t('login.mfaVerify') : t('login.signIn'))}</>
+                    : <>{passwordChangeStep ? t('settings.updatePassword') : mode === 'register' ? t('login.createAccount') : (mode === 'login' && mfaStep ? t('login.mfaVerify') : t('login.tabLogin'))}</>
                   }
                 </button>
               </form>
@@ -552,56 +592,29 @@ export default function LoginPage(): React.ReactElement {
           </>
         )}
 
-        {/* OIDC / SSO login button (only when OIDC is configured, oidc_login enabled, not in oidc-only mode) */}
-        {appConfig?.oidc_configured && appConfig?.oidc_login && !oidcOnly && (
+        {/* Federated (Google / SSO) button — when OIDC configured, not in oidc-only mode */}
+        {oidcButtonShown && (
           <>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 20 }}>
-              <div style={{ flex: 1, height: 1, background: '#EAECF0' }} />
-              <span style={{ fontSize: 'calc(13px * var(--fs-scale-body, 1))', color: '#98A2B3' }}>{t('common.or')}</span>
-              <div style={{ flex: 1, height: 1, background: '#EAECF0' }} />
-            </div>
+            {orDivider}
             <a href={`/api/auth/oidc/login${inviteToken ? '?invite=' + encodeURIComponent(inviteToken) : ''}`}
-              style={{
-                marginTop: 14, width: '100%', padding: '13px',
-                background: 'white', color: '#344054',
-                border: '1px solid #D0D5DD', borderRadius: 12,
-                fontSize: 'calc(15px * var(--fs-scale-body, 1))', fontWeight: 600, cursor: 'pointer',
-                fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                textDecoration: 'none', transition: 'background 180ms cubic-bezier(0.23,1,0.32,1), border-color 180ms cubic-bezier(0.23,1,0.32,1)',
-                boxSizing: 'border-box',
-              }}
-              onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.background = '#F9FAFB'; e.currentTarget.style.borderColor = '#98A2B3' }}
-              onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.background = 'white'; e.currentTarget.style.borderColor = '#D0D5DD' }}
+              style={secondaryBtn}
+              onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.background = '#F9FAFB'; e.currentTarget.style.borderColor = C.placeholder }}
+              onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.background = C.surface; e.currentTarget.style.borderColor = C.border }}
             >
-              <Shield size={16} />
-              {t('login.oidcSignIn', { name: appConfig.oidc_display_name })}
+              {isGoogleProvider ? <GoogleG size={18} /> : <Shield size={16} />}
+              {isGoogleProvider ? t('login.continueWithGoogle') : t('login.oidcSignIn', { name: appConfig!.oidc_display_name })}
             </a>
           </>
         )}
 
-        {/* Passkey login button (instance toggle on + a usable RP ID resolves) */}
+        {/* Passkey login button */}
         {passkeyAvailable && (
           <>
-            {!oidcButtonShown && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 20 }}>
-                <div style={{ flex: 1, height: 1, background: '#EAECF0' }} />
-                <span style={{ fontSize: 'calc(13px * var(--fs-scale-body, 1))', color: '#98A2B3' }}>{t('common.or')}</span>
-                <div style={{ flex: 1, height: 1, background: '#EAECF0' }} />
-              </div>
-            )}
+            {!oidcButtonShown && orDivider}
             <button type="button" onClick={handlePasskeyLogin} disabled={isLoading}
-              style={{
-                marginTop: 14, width: '100%', padding: '13px',
-                background: 'white', color: '#344054',
-                border: '1px solid #D0D5DD', borderRadius: 12,
-                fontSize: 'calc(15px * var(--fs-scale-body, 1))', fontWeight: 600, cursor: isLoading ? 'default' : 'pointer',
-                fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                opacity: isLoading ? 0.7 : 1,
-                transition: 'background 180ms cubic-bezier(0.23,1,0.32,1), border-color 180ms cubic-bezier(0.23,1,0.32,1)',
-                boxSizing: 'border-box',
-              }}
-              onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => { if (!isLoading) { e.currentTarget.style.background = '#F9FAFB'; e.currentTarget.style.borderColor = '#98A2B3' } }}
-              onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => { e.currentTarget.style.background = 'white'; e.currentTarget.style.borderColor = '#D0D5DD' }}
+              style={{ ...secondaryBtn, color: '#344054', cursor: isLoading ? 'default' : 'pointer', opacity: isLoading ? 0.7 : 1 }}
+              onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => { if (!isLoading) { e.currentTarget.style.background = '#F9FAFB'; e.currentTarget.style.borderColor = C.placeholder } }}
+              onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => { e.currentTarget.style.background = C.surface; e.currentTarget.style.borderColor = C.border }}
             >
               <Fingerprint size={16} />
               {t('login.passkey.signIn')}
@@ -613,10 +626,10 @@ export default function LoginPage(): React.ReactElement {
         {appConfig?.demo_mode && (
           <button onClick={handleDemoLogin} disabled={isLoading}
             style={{
-              marginTop: 20, width: '100%', padding: '14px',
+              marginTop: 20, width: '100%', height: A.buttonHeight,
               background: ACCENT_SUBTLE,
-              color: ACCENT, border: `1px solid ${ACCENT}`, borderRadius: 12,
-              fontSize: 'calc(15px * var(--fs-scale-body, 1))', fontWeight: 600, cursor: isLoading ? 'default' : 'pointer',
+              color: ACCENT, border: `1px solid ${ACCENT}`, borderRadius: R,
+              fontSize: `calc(${A.primaryButtonText.size}px * var(--fs-scale-body, 1))`, fontWeight: 600, cursor: isLoading ? 'default' : 'pointer',
               fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
               opacity: isLoading ? 0.7 : 1, transition: 'background 180ms, opacity 180ms',
             }}
@@ -628,16 +641,16 @@ export default function LoginPage(): React.ReactElement {
           </button>
         )}
 
-        {/* Terms & Privacy + Powered by Kuklabs (§15) */}
+        {/* Terms & Privacy + Powered by Kuklabs */}
         <div style={{ textAlign: 'center', marginTop: 28 }}>
-          <p style={{ margin: '0 0 12px', fontSize: 'calc(13px * var(--fs-scale-caption, 1))', color: '#667085', lineHeight: 1.5 }}>
+          <p style={{ margin: '0 0 12px', fontSize: `calc(${A.legalText.size}px * var(--fs-scale-caption, 1))`, color: C.textMuted, lineHeight: 1.5 }}>
             {t('login.legalPrefix')}{' '}
-            <a href="https://kuklabs.com/terms" target="_blank" rel="noopener noreferrer" style={{ color: ACCENT, fontWeight: 500, textDecoration: 'none' }}>{t('login.termsOfUse')}</a>
+            <a href={productBrand.termsUrl} target="_blank" rel="noopener noreferrer" style={{ color: ACCENT, fontWeight: 500, textDecoration: 'none' }}>{t('login.termsOfUse')}</a>
             {' '}{t('login.legalAnd')}{' '}
-            <a href="https://kuklabs.com/privacy" target="_blank" rel="noopener noreferrer" style={{ color: ACCENT, fontWeight: 500, textDecoration: 'none' }}>{t('login.privacyPolicy')}</a>
+            <a href={productBrand.privacyUrl} target="_blank" rel="noopener noreferrer" style={{ color: ACCENT, fontWeight: 500, textDecoration: 'none' }}>{t('login.privacyPolicy')}</a>
           </p>
-          <p style={{ margin: 0, fontSize: 'calc(13px * var(--fs-scale-caption, 1))', color: '#98A2B3' }}>
-            {t('login.poweredBy')} <span style={{ fontWeight: 600, color: '#667085' }}>Kuklabs</span>
+          <p style={{ margin: 0, fontSize: `calc(${A.poweredBy.size}px * var(--fs-scale-caption, 1))`, color: C.placeholder }}>
+            {t('login.poweredBy')} <span style={{ fontWeight: 600, color: C.textMuted }}>Kuklabs</span>
           </p>
         </div>
       </div>

@@ -6,6 +6,7 @@ import { useTranslation, detectBrowserLanguage } from '../../i18n'
 import { startAuthentication } from '@simplewebauthn/browser'
 import { authApi, configApi } from '../../api/client'
 import { getApiErrorMessage } from '../../types'
+import { authMessages } from '../../auth/authMessages'
 
 interface AppConfig {
   has_users: boolean
@@ -288,7 +289,9 @@ export function useLogin() {
       setShowTakeoff(true)
       setTimeout(() => navigate(redirectTarget), 2600)
     } catch (err: unknown) {
-      setError(getApiErrorMessage(err, t('login.error')))
+      // Friendly-error policy (KUKLABS_UI_AUTH_AGENT_PACK): never surface raw
+      // JSON/framework errors; fall back to one safe generic sign-in message.
+      setError(getApiErrorMessage(err, authMessages.genericSignInError))
       setIsLoading(false)
     }
   }

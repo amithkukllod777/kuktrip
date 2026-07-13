@@ -38,7 +38,7 @@ describe('LoginPage', () => {
 
       await user.type(screen.getByPlaceholderText(EMAIL_PLACEHOLDER), 'user@example.com');
       await user.type(screen.getByPlaceholderText(PASSWORD_PLACEHOLDER), 'password123');
-      await user.click(screen.getByRole('button', { name: /sign in/i }));
+      await user.click(screen.getByRole('button', { name: /^login$/i }));
 
       // On success, takeoff overlay appears
       await waitFor(() => {
@@ -64,7 +64,7 @@ describe('LoginPage', () => {
 
       await user.type(screen.getByPlaceholderText(EMAIL_PLACEHOLDER), 'bad@example.com');
       await user.type(screen.getByPlaceholderText(PASSWORD_PLACEHOLDER), 'wrongpass');
-      await user.click(screen.getByRole('button', { name: /sign in/i }));
+      await user.click(screen.getByRole('button', { name: /^login$/i }));
 
       await waitFor(() => {
         // authStore.login throws, LoginPage catches and sets error text from API response
@@ -93,7 +93,7 @@ describe('LoginPage', () => {
 
       await user.type(screen.getByPlaceholderText(EMAIL_PLACEHOLDER), 'user@example.com');
       await user.type(screen.getByPlaceholderText(PASSWORD_PLACEHOLDER), 'password123');
-      await user.click(screen.getByRole('button', { name: /sign in/i }));
+      await user.click(screen.getByRole('button', { name: /^login$/i }));
 
       // While loading, button becomes disabled with spinner text
       await waitFor(() => {
@@ -127,7 +127,7 @@ describe('LoginPage', () => {
       await user.type(screen.getByPlaceholderText(PASSWORD_PLACEHOLDER), 'password123');
       await user.click(toggle);
       expect(toggle).toHaveAttribute('aria-pressed', 'true');
-      await user.click(screen.getByRole('button', { name: /sign in/i }));
+      await user.click(screen.getByRole('button', { name: /^login$/i }));
 
       await waitFor(() => {
         expect(capturedBody).toEqual(expect.objectContaining({ remember_me: true }));
@@ -247,7 +247,7 @@ describe('LoginPage', () => {
 
       await user.type(screen.getByPlaceholderText(EMAIL_PLACEHOLDER), 'user@example.com');
       await user.type(screen.getByPlaceholderText(PASSWORD_PLACEHOLDER), 'password123');
-      await user.click(screen.getByRole('button', { name: /sign in/i }));
+      await user.click(screen.getByRole('button', { name: /^login$/i }));
 
       // MFA step: the title changes to "Two-factor authentication"
       await waitFor(() => {
@@ -270,7 +270,7 @@ describe('LoginPage', () => {
 
       await user.type(screen.getByPlaceholderText(EMAIL_PLACEHOLDER), 'user@example.com');
       await user.type(screen.getByPlaceholderText(PASSWORD_PLACEHOLDER), 'pass1234');
-      await user.click(screen.getByRole('button', { name: /sign in/i }));
+      await user.click(screen.getByRole('button', { name: /^login$/i }));
 
       // Takeoff animation signals navigation away from login
       await waitFor(() => {
@@ -298,7 +298,7 @@ describe('LoginPage', () => {
 
       await user.type(screen.getByPlaceholderText(EMAIL_PLACEHOLDER), 'user@example.com');
       await user.type(screen.getByPlaceholderText(PASSWORD_PLACEHOLDER), 'password123');
-      await user.click(screen.getByRole('button', { name: /sign in/i }));
+      await user.click(screen.getByRole('button', { name: /^login$/i }));
 
       await waitFor(() => {
         expect(screen.getByPlaceholderText('New password')).toBeInTheDocument();
@@ -326,7 +326,7 @@ describe('LoginPage', () => {
 
       await user.type(screen.getByPlaceholderText(EMAIL_PLACEHOLDER), 'user@example.com');
       await user.type(screen.getByPlaceholderText(PASSWORD_PLACEHOLDER), 'password123');
-      await user.click(screen.getByRole('button', { name: /sign in/i }));
+      await user.click(screen.getByRole('button', { name: /^login$/i }));
 
       await waitFor(() => {
         expect(screen.getByPlaceholderText('New password')).toBeInTheDocument();
@@ -361,7 +361,7 @@ describe('LoginPage', () => {
 
       await user.type(screen.getByPlaceholderText(EMAIL_PLACEHOLDER), 'user@example.com');
       await user.type(screen.getByPlaceholderText(PASSWORD_PLACEHOLDER), 'password123');
-      await user.click(screen.getByRole('button', { name: /sign in/i }));
+      await user.click(screen.getByRole('button', { name: /^login$/i }));
 
       await waitFor(() => {
         expect(screen.getByPlaceholderText('New password')).toBeInTheDocument();
@@ -399,7 +399,7 @@ describe('LoginPage', () => {
 
       await user.type(screen.getByPlaceholderText(EMAIL_PLACEHOLDER), 'user@example.com');
       await user.type(screen.getByPlaceholderText(PASSWORD_PLACEHOLDER), 'password123');
-      await user.click(screen.getByRole('button', { name: /sign in/i }));
+      await user.click(screen.getByRole('button', { name: /^login$/i }));
 
       await waitFor(() => {
         expect(screen.getByPlaceholderText('New password')).toBeInTheDocument();
@@ -517,7 +517,7 @@ describe('LoginPage', () => {
 
       await user.type(screen.getByPlaceholderText(EMAIL_PLACEHOLDER), 'user@example.com');
       await user.type(screen.getByPlaceholderText(PASSWORD_PLACEHOLDER), 'password123');
-      await user.click(screen.getByRole('button', { name: /sign in/i }));
+      await user.click(screen.getByRole('button', { name: /^login$/i }));
 
       await waitFor(() => {
         expect(screen.getByPlaceholderText('000000 or XXXX-XXXX')).toBeInTheDocument();
@@ -552,7 +552,7 @@ describe('LoginPage', () => {
 
       await user.type(screen.getByPlaceholderText(EMAIL_PLACEHOLDER), 'user@example.com');
       await user.type(screen.getByPlaceholderText(PASSWORD_PLACEHOLDER), 'password123');
-      await user.click(screen.getByRole('button', { name: /sign in/i }));
+      await user.click(screen.getByRole('button', { name: /^login$/i }));
 
       await waitFor(() => {
         expect(screen.getByPlaceholderText('000000 or XXXX-XXXX')).toBeInTheDocument();

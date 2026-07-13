@@ -23,9 +23,10 @@ const login: TranslationStrings = {
   'login.selfHosted': 'Self-hosted · Open Source · Your data stays yours',
   // Kuklabs identity standard (KUKLABS_IDENTITY.md §15 — Authentication screen)
   'login.welcomeTo': 'Welcome to',
-  'login.productTagline': 'Plan trips together — maps, budgets & real-time sync.',
+  'login.productTagline': 'Maps, budgets & real-time planning — synced with your Kuklabs account.',
   'login.tabLogin': 'Login',
   'login.tabSignUp': 'Sign Up',
+  'login.continueWithGoogle': 'Continue with Google',
   'login.legalPrefix': 'By continuing, you agree to our',
   'login.termsOfUse': 'Terms of Use',
   'login.legalAnd': 'and',
