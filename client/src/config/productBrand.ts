@@ -5,7 +5,7 @@
 // comes from the shared standard + design tokens.
 export const productBrand = {
   productId: 'kuktrip',
-  productName: 'KukTrip',
+  productName: 'Kuk Trip',
   shortName: 'Trip',
   packageId: 'com.kuklabs.trip',
   subdomain: 'trip.kuklabs.com',

@@ -48,7 +48,7 @@ function GoogleG({ size = 18 }: { size?: number }): React.ReactElement {
 function ProductName(): React.ReactElement {
   return (
     <h1 style={{ margin: 0, fontSize: `calc(${A.productName.size}px * var(--fs-scale-title, 1))`, fontWeight: A.productName.weight, letterSpacing: '-0.02em', lineHeight: `${A.productName.lineHeight}px`, color: C.textPrimary }}>
-      Kuk<span style={{ color: ACCENT }}>{productBrand.shortName}</span>
+      Kuk <span style={{ color: ACCENT }}>{productBrand.shortName}</span>
     </h1>
   )
 }
@@ -175,7 +175,7 @@ export default function LoginPage(): React.ReactElement {
         }}>
           <ProductMark size={80} />
           <h1 style={{ margin: 0, fontSize: 'calc(40px * var(--fs-scale-title, 1))', fontWeight: 800, letterSpacing: '-0.02em', color: 'white' }}>
-            Kuk<span style={{ color: '#93C5FD' }}>{productBrand.shortName}</span>
+            Kuk <span style={{ color: '#93C5FD' }}>{productBrand.shortName}</span>
           </h1>
         </div>
 
