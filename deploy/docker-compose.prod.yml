@@ -1,0 +1,58 @@
+# Kuk Trip — production stack for AWS EC2 (trip.kuklabs.com)
+# App (SQLite + local uploads → persistent named volumes) behind Caddy, which
+# terminates TLS and auto-provisions a Let's Encrypt cert for trip.kuklabs.com.
+# Single-instance by design (SQLite): do not run more than one app replica.
+services:
+  app:
+    image: ghcr.io/amithkukllod777/kuktrip:prod
+    container_name: kuktrip
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - APP_URL=https://trip.kuklabs.com
+      - ALLOWED_ORIGINS=https://trip.kuklabs.com
+      - FORCE_HTTPS=true
+      - TRUST_PROXY=1
+      - TZ=${TZ:-Asia/Kolkata}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      # openssl rand -hex 32  (set in deploy/.env on the server)
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY:?set ENCRYPTION_KEY in deploy/.env}
+      # First-boot only (when no users exist); comment out after the first deploy.
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
+    volumes:
+      - kuktrip-data:/app/data
+      - kuktrip-uploads:/app/uploads
+    expose:
+      - "3000"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks: [web]
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: kuktrip-caddy
+    restart: unless-stopped
+    depends_on: [app]
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks: [web]
+
+networks:
+  web:
+
+volumes:
+  kuktrip-data:
+  kuktrip-uploads:
+  caddy-data:
+  caddy-config:
