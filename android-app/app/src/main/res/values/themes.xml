@@ -1,0 +1,5 @@
+<resources>
+    <!-- Base XML theme for the Activity window. All UI is drawn with Compose +
+         Material3 (KukTripTheme); edge-to-edge is enabled in code. -->
+    <style name="Theme.KukTrip" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>

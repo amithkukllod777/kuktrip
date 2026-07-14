@@ -1,0 +1,42 @@
+name: Android build (Kuk Trip)
+
+on:
+  push:
+    branches: [ "claude/android-kotlin-pc78xg" ]
+    paths:
+      - "android-app/**"
+      - ".github/workflows/android-build.yml"
+  pull_request:
+    paths:
+      - "android-app/**"
+      - ".github/workflows/android-build.yml"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.9"
+          build-root-directory: android-app
+
+      - name: Assemble debug APK
+        working-directory: android-app
+        run: gradle :app:assembleDebug --no-daemon --stacktrace
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: kuktrip-debug-apk
+          path: android-app/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
