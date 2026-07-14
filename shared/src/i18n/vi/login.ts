@@ -89,5 +89,16 @@ const login: TranslationStrings = {
   'login.insecureCookie.body':
     'Bạn đang kết nối qua HTTP thuần, nên trình duyệt loại bỏ cookie phiên bảo mật của TREK — yêu cầu tiếp theo sẽ thất bại với "Access token required". Cách khắc phục: dùng HTTPS, hoặc với máy chủ tại nhà hãy đặt COOKIE_SECURE=false.',
   'login.insecureCookie.link': 'Mở hướng dẫn khắc phục sự cố',
+  // Kuklabs auth standard (untranslated — English fallback)
+  'login.welcomeTo': 'Welcome to',
+  'login.productTagline': 'Maps, budgets & real-time planning — synced with your Kuklabs account.',
+  'login.tabLogin': 'Login',
+  'login.tabSignUp': 'Sign Up',
+  'login.continueWithGoogle': 'Continue with Google',
+  'login.legalPrefix': 'By continuing, you agree to our',
+  'login.termsOfUse': 'Terms of Use',
+  'login.legalAnd': 'and',
+  'login.privacyPolicy': 'Privacy Policy',
+  'login.poweredBy': 'Powered by',
 };
 export default login;

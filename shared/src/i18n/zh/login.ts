@@ -86,5 +86,16 @@ const login: TranslationStrings = {
   'login.insecureCookie.body':
     '你正在通过普通 HTTP 连接，浏览器会丢弃 TREK 的安全会话 Cookie，导致下一次请求报错“Access token required”。修复方式：改用 HTTPS；如果是家庭实验室环境，可设置 COOKIE_SECURE=false。',
   'login.insecureCookie.link': '打开故障排查指南',
+  // Kuklabs auth standard (untranslated — English fallback)
+  'login.welcomeTo': 'Welcome to',
+  'login.productTagline': 'Maps, budgets & real-time planning — synced with your Kuklabs account.',
+  'login.tabLogin': 'Login',
+  'login.tabSignUp': 'Sign Up',
+  'login.continueWithGoogle': 'Continue with Google',
+  'login.legalPrefix': 'By continuing, you agree to our',
+  'login.termsOfUse': 'Terms of Use',
+  'login.legalAnd': 'and',
+  'login.privacyPolicy': 'Privacy Policy',
+  'login.poweredBy': 'Powered by',
 };
 export default login;

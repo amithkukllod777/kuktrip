@@ -90,5 +90,16 @@ const login: TranslationStrings = {
   'login.insecureCookie.body':
     'Du verbindest dich über reines HTTP, daher verwirft dein Browser TREKs sicheren Session-Cookie — die nächste Anfrage scheitert mit „Access token required". Lösung: HTTPS nutzen, oder für ein Heim-Setup COOKIE_SECURE=false setzen.',
   'login.insecureCookie.link': 'Zur Troubleshooting-Anleitung',
+  // Kuklabs auth standard (untranslated — English fallback)
+  'login.welcomeTo': 'Welcome to',
+  'login.productTagline': 'Maps, budgets & real-time planning — synced with your Kuklabs account.',
+  'login.tabLogin': 'Login',
+  'login.tabSignUp': 'Sign Up',
+  'login.continueWithGoogle': 'Continue with Google',
+  'login.legalPrefix': 'By continuing, you agree to our',
+  'login.termsOfUse': 'Terms of Use',
+  'login.legalAnd': 'and',
+  'login.privacyPolicy': 'Privacy Policy',
+  'login.poweredBy': 'Powered by',
 };
 export default login;
