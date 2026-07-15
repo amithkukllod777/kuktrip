@@ -237,6 +237,9 @@ export interface AppConfig {
   oidc_login?: boolean
   oidc_registration?: boolean
   env_override_oidc_only?: boolean
+  // KukLabs Account SSO (one Kuklabs Account across the ecosystem)
+  kuklabs_sso?: boolean
+  kuklabs_login_url?: string
 }
 
 // Translation function type

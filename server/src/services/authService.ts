@@ -7,7 +7,7 @@ import { authenticator } from 'otplib';
 import QRCode from 'qrcode';
 import { randomBytes, createHash } from 'crypto';
 import { db } from '../db/database';
-import { JWT_SECRET, SESSION_DURATION_SECONDS, SESSION_DURATION_REMEMBER_SECONDS } from '../config';
+import { JWT_SECRET, SESSION_DURATION_SECONDS, SESSION_DURATION_REMEMBER_SECONDS, KUKLABS_SSO_ENABLED, KUKLABS_LOGIN_URL } from '../config';
 import { validatePassword } from './passwordPolicy';
 import { encryptMfaSecret, decryptMfaSecret } from './mfaCrypto';
 import { getAllPermissions } from './permissions';
@@ -345,6 +345,11 @@ export function getAppConfig(authenticatedUser: { id: number } | null) {
     places_details_enabled: placesDetailsEnabled,
     permissions: authenticatedUser ? getAllPermissions() : undefined,
     dev_mode: process.env.NODE_ENV === 'development',
+    // KukLabs Account SSO (one Kuklabs Account). When enabled, the login page
+    // offers "Continue with KukLabs"; a visitor already signed into the platform
+    // is bridged in silently (see middleware/kuklabsSso.ts) before ever seeing it.
+    kuklabs_sso: KUKLABS_SSO_ENABLED,
+    kuklabs_login_url: KUKLABS_SSO_ENABLED ? KUKLABS_LOGIN_URL : undefined,
   };
 }
 

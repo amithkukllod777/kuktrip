@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import { logDebug, logWarn, logError } from '../services/auditLog';
 import { enforceGlobalMfaPolicy } from './mfaPolicy';
+import { kuklabsSsoBridge } from './kuklabsSso';
 
 /**
  * The global request pipeline shared by the legacy Express app and the NestJS
@@ -152,6 +153,10 @@ export function applyGlobalMiddleware(
     app.use(express.urlencoded({ extended: true }));
   }
   app.use(cookieParser());
+  // KukLabs Account SSO: turn a `.kuklabs.com` platform session into a local
+  // Kuk Trip session (no-op unless KUKLABS_SSO_ENABLED). Must run after
+  // cookie-parser (needs req.cookies) and before auth-dependent handlers.
+  app.use(kuklabsSsoBridge);
   app.use(enforceGlobalMfaPolicy);
 
   // Request logging with sensitive field redaction
