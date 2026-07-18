@@ -22,6 +22,9 @@ interface AppConfig {
   passkey_login?: boolean
   passkey_configured?: boolean
   env_override_oidc_only: boolean
+  // KukLabs Account SSO (one Kuklabs Account across the ecosystem)
+  kuklabs_sso?: boolean
+  kuklabs_login_url?: string
 }
 
 /**

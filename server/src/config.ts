@@ -174,3 +174,49 @@ export const SESSION_DURATION_REMEMBER =
 export const SESSION_DURATION_REMEMBER_MS = parsedRememberMs ?? parseDurationMs(DEFAULT_SESSION_DURATION_REMEMBER)!;
 /** "Remember me" session length in seconds — passed to `jwt.sign({ expiresIn })`. */
 export const SESSION_DURATION_REMEMBER_SECONDS = Math.floor(SESSION_DURATION_REMEMBER_MS / 1000);
+
+// ---------------------------------------------------------------------------
+// KukLabs Account SSO (one Kuklabs Account across the ecosystem)
+// ---------------------------------------------------------------------------
+// Kuk Trip runs at trip.kuklabs.com, a sibling of kuklabs.com / book.kuklabs.com.
+// The KukLabs platform (KukBook) sets a session cookie scoped to `.kuklabs.com`,
+// so the browser automatically presents it to Kuk Trip. When SSO is enabled we
+// verify that cookie with the SHARED signing secret and provision/adopt a local
+// user keyed by the KukLabs openId — no second login, one Kuklabs Account.
+//
+// This is entirely OPT-IN and OFF by default: self-hosted / open-source TREK
+// installs never see it, keeping the app's own email+password/OIDC login intact.
+// It only switches on when KUKLABS_SSO_ENABLED=true AND KUKLABS_JWT_SECRET is set
+// (the same value as KukBook's JWT_SECRET, injected as an env var on the shared
+// EC2 host). Never persisted to disk — it lives only in the process env.
+export const KUKLABS_SSO_ENABLED =
+  process.env.KUKLABS_SSO_ENABLED?.toLowerCase() === 'true' &&
+  !!process.env.KUKLABS_JWT_SECRET?.trim();
+
+if (process.env.KUKLABS_SSO_ENABLED?.toLowerCase() === 'true' && !process.env.KUKLABS_JWT_SECRET?.trim()) {
+  console.warn(
+    'KUKLABS_SSO_ENABLED=true but KUKLABS_JWT_SECRET is empty — KukLabs SSO stays OFF. ' +
+      'Set KUKLABS_JWT_SECRET to the same value as the KukLabs platform JWT_SECRET.',
+  );
+}
+
+/** Shared HS256 secret used to verify the KukLabs `.kuklabs.com` session cookie. */
+export const KUKLABS_JWT_SECRET = process.env.KUKLABS_JWT_SECRET?.trim() || '';
+
+/** Name of the KukLabs platform session cookie (KukBook's COOKIE_NAME). */
+export const KUKLABS_COOKIE_NAME = process.env.KUKLABS_COOKIE_NAME?.trim() || 'app_session_id';
+
+/** Where to send a logged-out visitor to sign in with their Kuklabs Account. */
+export const KUKLABS_LOGIN_URL =
+  process.env.KUKLABS_LOGIN_URL?.trim() || 'https://www.kuklabs.com/login';
+
+/**
+ * Comma-separated KukLabs openIds that should be granted the Kuk Trip `admin`
+ * role when provisioned via SSO (e.g. the platform owner). Everyone else lands
+ * as a normal `user`. Optional — leave unset and the first-ever provisioned SSO
+ * account becomes admin (bootstrap), matching TREK's first-user convention.
+ */
+export const KUKLABS_ADMIN_OPENIDS = (process.env.KUKLABS_ADMIN_OPENIDS || '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);

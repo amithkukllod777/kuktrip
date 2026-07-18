@@ -635,6 +635,37 @@ export default function LoginPage(): React.ReactElement {
             </>)}
           </div>
 
+          {/* KukLabs Account SSO — one Kuklabs Account across the ecosystem.
+              A visitor already signed into the platform is bridged in silently
+              (server middleware) and never reaches this page; this button is for
+              logged-out visitors, sending them to the shared /login and back. */}
+          {appConfig?.kuklabs_sso && appConfig?.kuklabs_login_url && (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 16 }}>
+                <div style={{ flex: 1, height: 1, background: '#e5e7eb' }} />
+                <span style={{ fontSize: 'calc(12px * var(--fs-scale-body, 1))', color: '#9ca3af' }}>{t('common.or')}</span>
+                <div style={{ flex: 1, height: 1, background: '#e5e7eb' }} />
+              </div>
+              <a
+                href={`${appConfig.kuklabs_login_url}?returnTo=${encodeURIComponent(typeof window !== 'undefined' ? window.location.origin + '/' : '/')}`}
+                style={{
+                  marginTop: 12, width: '100%', padding: '13px',
+                  background: '#2563EB', color: 'white',
+                  border: '1px solid #2563EB', borderRadius: 12,
+                  fontSize: 'calc(14px * var(--fs-scale-body, 1))', fontWeight: 600, cursor: 'pointer',
+                  fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                  textDecoration: 'none', transition: 'background 180ms cubic-bezier(0.23,1,0.32,1)',
+                  boxSizing: 'border-box',
+                }}
+                onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.background = '#1d4ed8' }}
+                onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.background = '#2563EB' }}
+              >
+                <Zap size={16} />
+                Continue with Kuklabs
+              </a>
+            </>
+          )}
+
           {/* OIDC / SSO login button (only when OIDC is configured, oidc_login enabled, not in oidc-only mode) */}
           {appConfig?.oidc_configured && appConfig?.oidc_login && !oidcOnly && (
             <>

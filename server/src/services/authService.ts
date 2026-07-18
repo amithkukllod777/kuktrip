@@ -282,6 +282,9 @@ export function getPendingMfaSecret(userId: number): string | null {
 export function getAppConfig(authenticatedUser: { id: number } | null) {
   const userCount = (db.prepare('SELECT COUNT(*) as count FROM users WHERE COALESCE(is_guest, 0) = 0').get() as { count: number }).count;
   const isDemo = process.env.DEMO_MODE?.toLowerCase() === 'true';
+  const kuklabsSsoEnabled =
+    process.env.KUKLABS_SSO_ENABLED?.toLowerCase() === 'true' &&
+    !!process.env.KUKLABS_JWT_SECRET?.trim();
   const toggles = resolveAuthToggles();
   const version: string = process.env.APP_VERSION ?? require('../../package.json').version;
   const hasGoogleKey = !!db.prepare("SELECT maps_api_key FROM users WHERE role = 'admin' AND maps_api_key IS NOT NULL AND maps_api_key != '' LIMIT 1").get();
@@ -345,6 +348,15 @@ export function getAppConfig(authenticatedUser: { id: number } | null) {
     places_details_enabled: placesDetailsEnabled,
     permissions: authenticatedUser ? getAllPermissions() : undefined,
     dev_mode: process.env.NODE_ENV === 'development',
+    // KukLabs Account SSO (one Kuklabs Account). When enabled, the login page
+    // offers "Continue with KukLabs"; a visitor already signed into the platform
+    // is bridged in silently (see middleware/kuklabsSso.ts) before ever seeing it.
+    // Read from process.env (not the config module) so the partial `../config`
+    // mocks used across the integration test-suite don't throw here.
+    kuklabs_sso: kuklabsSsoEnabled,
+    kuklabs_login_url: kuklabsSsoEnabled
+      ? (process.env.KUKLABS_LOGIN_URL?.trim() || 'https://www.kuklabs.com/login')
+      : undefined,
   };
 }
 
