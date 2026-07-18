@@ -7,7 +7,7 @@ import { authenticator } from 'otplib';
 import QRCode from 'qrcode';
 import { randomBytes, createHash } from 'crypto';
 import { db } from '../db/database';
-import { JWT_SECRET, SESSION_DURATION_SECONDS, SESSION_DURATION_REMEMBER_SECONDS, KUKLABS_SSO_ENABLED, KUKLABS_LOGIN_URL } from '../config';
+import { JWT_SECRET, SESSION_DURATION_SECONDS, SESSION_DURATION_REMEMBER_SECONDS } from '../config';
 import { validatePassword } from './passwordPolicy';
 import { encryptMfaSecret, decryptMfaSecret } from './mfaCrypto';
 import { getAllPermissions } from './permissions';
@@ -282,6 +282,9 @@ export function getPendingMfaSecret(userId: number): string | null {
 export function getAppConfig(authenticatedUser: { id: number } | null) {
   const userCount = (db.prepare('SELECT COUNT(*) as count FROM users WHERE COALESCE(is_guest, 0) = 0').get() as { count: number }).count;
   const isDemo = process.env.DEMO_MODE?.toLowerCase() === 'true';
+  const kuklabsSsoEnabled =
+    process.env.KUKLABS_SSO_ENABLED?.toLowerCase() === 'true' &&
+    !!process.env.KUKLABS_JWT_SECRET?.trim();
   const toggles = resolveAuthToggles();
   const version: string = process.env.APP_VERSION ?? require('../../package.json').version;
   const hasGoogleKey = !!db.prepare("SELECT maps_api_key FROM users WHERE role = 'admin' AND maps_api_key IS NOT NULL AND maps_api_key != '' LIMIT 1").get();
@@ -348,8 +351,12 @@ export function getAppConfig(authenticatedUser: { id: number } | null) {
     // KukLabs Account SSO (one Kuklabs Account). When enabled, the login page
     // offers "Continue with KukLabs"; a visitor already signed into the platform
     // is bridged in silently (see middleware/kuklabsSso.ts) before ever seeing it.
-    kuklabs_sso: KUKLABS_SSO_ENABLED,
-    kuklabs_login_url: KUKLABS_SSO_ENABLED ? KUKLABS_LOGIN_URL : undefined,
+    // Read from process.env (not the config module) so the partial `../config`
+    // mocks used across the integration test-suite don't throw here.
+    kuklabs_sso: kuklabsSsoEnabled,
+    kuklabs_login_url: kuklabsSsoEnabled
+      ? (process.env.KUKLABS_LOGIN_URL?.trim() || 'https://www.kuklabs.com/login')
+      : undefined,
   };
 }
 

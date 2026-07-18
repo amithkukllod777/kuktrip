@@ -1,10 +1,24 @@
 import type { Request, Response, NextFunction } from 'express';
-import { KUKLABS_SSO_ENABLED, KUKLABS_COOKIE_NAME } from '../config';
 import { verifyJwtAndLoadUser } from './auth';
 import { verifyKuklabsCookie, provisionKuklabsUser, mintTrekSession } from '../services/kuklabsSso';
 import { setAuthCookie } from '../services/cookie';
 
 const TREK_COOKIE = 'trek_session';
+
+/**
+ * Whether the KukLabs SSO bridge is active. Read straight from `process.env`
+ * (NOT the config module) on purpose: this runs on every request, and the
+ * integration test-suite mocks `../config` with a partial object — importing a
+ * config binding here would throw on those mocks and 500 every request. The
+ * enabled path still uses the config-derived constants (inside the service),
+ * which the disabled fast-path never reaches.
+ */
+function ssoEnabled(): boolean {
+  return (
+    process.env.KUKLABS_SSO_ENABLED?.toLowerCase() === 'true' &&
+    !!process.env.KUKLABS_JWT_SECRET?.trim()
+  );
+}
 
 /**
  * Silent KukLabs SSO bridge.
@@ -21,13 +35,14 @@ const TREK_COOKIE = 'trek_session';
  *     `trek_session`, set it on the response (so later requests are fast) AND on
  *     the current request (so this very request is authenticated downstream).
  *
- * Every branch fails OPEN: any error just falls through to the app's normal auth,
- * so a misconfigured secret degrades to "not signed in", never a 500.
+ * The ENTIRE body is wrapped so it fails OPEN: any error (including a partial
+ * config mock in tests, or a misconfigured secret in prod) just falls through to
+ * the app's normal auth — the request degrades to "not signed in", never a 500.
  */
 export function kuklabsSsoBridge(req: Request, res: Response, next: NextFunction): void {
-  if (!KUKLABS_SSO_ENABLED) return next();
-
   try {
+    if (!ssoEnabled()) return next();
+
     const cookies = (req as any).cookies || {};
 
     // Already have a working Kuk Trip session? Leave it alone.
@@ -35,7 +50,8 @@ export function kuklabsSsoBridge(req: Request, res: Response, next: NextFunction
     if (existing && verifyJwtAndLoadUser(existing)) return next();
 
     // No KukLabs platform cookie → nothing to bridge (anonymous visitor).
-    const platformToken = cookies[KUKLABS_COOKIE_NAME];
+    const platformCookieName = process.env.KUKLABS_COOKIE_NAME?.trim() || 'app_session_id';
+    const platformToken = cookies[platformCookieName];
     if (!platformToken) return next();
 
     const identity = verifyKuklabsCookie(platformToken);
