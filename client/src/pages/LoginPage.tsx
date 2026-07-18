@@ -20,6 +20,14 @@ export default function LoginPage(): React.ReactElement {
   } = useLogin()
 
   const oidcButtonShown = !!(appConfig?.oidc_configured && appConfig?.oidc_login && !oidcOnly)
+  // KukLabs Account is the ONE identity for the hosted app: when SSO is on, Kuk
+  // Trip has no signup of its own — sign in AND sign up both defer to the shared
+  // Kuklabs /login (email+password, mobile+email OTP, Google), exactly like
+  // KukKeep / KukChat. The silent bridge adopts the session on return.
+  const kuklabsOnly = !!(appConfig?.kuklabs_sso && appConfig?.kuklabs_login_url)
+  const kuklabsLoginHref = kuklabsOnly
+    ? `${appConfig!.kuklabs_login_url}?returnTo=${encodeURIComponent(typeof window !== 'undefined' ? window.location.origin + '/' : '/')}`
+    : '#'
   const passkeyAvailable = !!(appConfig?.passkey_login && appConfig?.passkey_configured && !oidcOnly
     && mode === 'login' && !mfaStep && !passwordChangeStep)
 
@@ -393,7 +401,38 @@ export default function LoginPage(): React.ReactElement {
           </div>
 
           <div style={{ background: 'white', borderRadius: 20, border: '1px solid #e5e7eb', padding: '36px 32px', boxShadow: '0 2px 16px rgba(0,0,0,0.06)' }}>
-            {oidcOnly ? (
+            {kuklabsOnly ? (
+              <>
+                <h2 style={{ margin: '0 0 4px', fontSize: 'calc(22px * var(--fs-scale-title, 1))', fontWeight: 800, color: '#111827' }}>{t('login.title')}</h2>
+                <p style={{ margin: '0 0 24px', fontSize: 'calc(13.5px * var(--fs-scale-body, 1))', color: '#9ca3af' }}>
+                  Sign in with your Kuklabs Account — the one login for every Kuklabs app.
+                </p>
+                {error && (
+                  <div style={{ padding: '10px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, fontSize: 'calc(13px * var(--fs-scale-body, 1))', color: '#dc2626', marginBottom: 16 }}>
+                    {error}
+                  </div>
+                )}
+                <a href={kuklabsLoginHref}
+                  style={{
+                    width: '100%', padding: '14px',
+                    background: '#2563EB', color: 'white',
+                    border: '1px solid #2563EB', borderRadius: 12,
+                    fontSize: 'calc(15px * var(--fs-scale-subtitle, 1))', fontWeight: 700, cursor: 'pointer',
+                    fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                    textDecoration: 'none', transition: 'background 180ms cubic-bezier(0.23,1,0.32,1)',
+                    boxSizing: 'border-box',
+                  }}
+                  onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.background = '#1d4ed8' }}
+                  onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.background = '#2563EB' }}
+                >
+                  <Zap size={17} />
+                  Continue with Kuklabs
+                </a>
+                <p style={{ margin: '16px 0 0', fontSize: 'calc(12.5px * var(--fs-scale-caption, 1))', color: '#9ca3af', textAlign: 'center', lineHeight: 1.5 }}>
+                  New to Kuklabs? The same button creates your account — email &amp; password, mobile OTP, or Google.
+                </p>
+              </>
+            ) : oidcOnly ? (
               <>
                 <h2 style={{ margin: '0 0 4px', fontSize: 'calc(22px * var(--fs-scale-title, 1))', fontWeight: 800, color: '#111827' }}>{t('login.title')}</h2>
                 <p style={{ margin: '0 0 24px', fontSize: 'calc(13.5px * var(--fs-scale-body, 1))', color: '#9ca3af' }}>{noRedirect ? t('login.oidcLoggedOut') : t('login.oidcOnly')}</p>
@@ -634,37 +673,6 @@ export default function LoginPage(): React.ReactElement {
             )}
             </>)}
           </div>
-
-          {/* KukLabs Account SSO — one Kuklabs Account across the ecosystem.
-              A visitor already signed into the platform is bridged in silently
-              (server middleware) and never reaches this page; this button is for
-              logged-out visitors, sending them to the shared /login and back. */}
-          {appConfig?.kuklabs_sso && appConfig?.kuklabs_login_url && (
-            <>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 16 }}>
-                <div style={{ flex: 1, height: 1, background: '#e5e7eb' }} />
-                <span style={{ fontSize: 'calc(12px * var(--fs-scale-body, 1))', color: '#9ca3af' }}>{t('common.or')}</span>
-                <div style={{ flex: 1, height: 1, background: '#e5e7eb' }} />
-              </div>
-              <a
-                href={`${appConfig.kuklabs_login_url}?returnTo=${encodeURIComponent(typeof window !== 'undefined' ? window.location.origin + '/' : '/')}`}
-                style={{
-                  marginTop: 12, width: '100%', padding: '13px',
-                  background: '#2563EB', color: 'white',
-                  border: '1px solid #2563EB', borderRadius: 12,
-                  fontSize: 'calc(14px * var(--fs-scale-body, 1))', fontWeight: 600, cursor: 'pointer',
-                  fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                  textDecoration: 'none', transition: 'background 180ms cubic-bezier(0.23,1,0.32,1)',
-                  boxSizing: 'border-box',
-                }}
-                onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.background = '#1d4ed8' }}
-                onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.background = '#2563EB' }}
-              >
-                <Zap size={16} />
-                Continue with Kuklabs
-              </a>
-            </>
-          )}
 
           {/* OIDC / SSO login button (only when OIDC is configured, oidc_login enabled, not in oidc-only mode) */}
           {appConfig?.oidc_configured && appConfig?.oidc_login && !oidcOnly && (
