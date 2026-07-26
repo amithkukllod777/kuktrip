@@ -1,0 +1,10 @@
+# Caddy auto-provisions and renews a Let's Encrypt TLS cert for trip.kuklabs.com.
+# Requires: DNS A record trip.kuklabs.com → EC2 public IP, and ports 80+443 open.
+{
+	email admin@kuklabs.com
+}
+
+trip.kuklabs.com {
+	encode zstd gzip
+	reverse_proxy app:3000
+}
