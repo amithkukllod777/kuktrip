@@ -1,0 +1,525 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Kuk Trip — Plan trips together</title>
+<meta name="description" content="Kuk Trip is collaborative travel planning: build a day-by-day itinerary, map every stop, split the budget, and keep it all in sync — online or off. One Kuklabs Account." />
+<meta name="theme-color" content="#2563EB" />
+<link rel="canonical" href="https://trip.kuklabs.com/" />
+<meta property="og:title" content="Kuk Trip — Plan trips together" />
+<meta property="og:description" content="Build the itinerary, map every stop, split the budget, and stay in sync — online or off." />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://trip.kuklabs.com/" />
+<!-- Inter is the Kuklabs-standard face. Loaded here for the hosted site; a
+     tuned system stack covers any environment that blocks the font host. -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --ink: #0c1526;
+    --paper: #f6f4ef;
+    --surface: #ffffff;
+    --surface-2: #f0ede6;
+    --text: #263041;
+    --muted: #667085;
+    --hair: rgba(12, 21, 38, 0.10);
+    --hair-strong: rgba(12, 21, 38, 0.16);
+    --accent: #2563eb;
+    --accent-deep: #1e40af;
+    --accent-soft: rgba(37, 99, 235, 0.10);
+    --amber: #f59e0b;
+    --shadow: 0 1px 2px rgba(12,21,38,.04), 0 12px 32px -12px rgba(12,21,38,.18);
+    --shadow-lg: 0 2px 4px rgba(12,21,38,.05), 0 30px 60px -24px rgba(12,21,38,.30);
+    --radius: 18px;
+    --maxw: 1120px;
+    --font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Roboto Mono", Menlo, Consolas, monospace;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink: #e7ecf3;
+      --paper: #0a1120;
+      --surface: #111a2b;
+      --surface-2: #0e1626;
+      --text: #d3dbe7;
+      --muted: #93a0b4;
+      --hair: rgba(255, 255, 255, 0.10);
+      --hair-strong: rgba(255, 255, 255, 0.16);
+      --accent: #5b8bff;
+      --accent-deep: #3b6ef0;
+      --accent-soft: rgba(91, 139, 255, 0.14);
+      --amber: #fbbf24;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 32px -12px rgba(0,0,0,.6);
+      --shadow-lg: 0 2px 4px rgba(0,0,0,.5), 0 30px 60px -24px rgba(0,0,0,.7);
+      color-scheme: dark;
+    }
+  }
+  /* Explicit toggle overrides the media query in both directions. */
+  :root[data-theme="light"] {
+    --ink:#0c1526; --paper:#f6f4ef; --surface:#fff; --surface-2:#f0ede6; --text:#263041;
+    --muted:#667085; --hair:rgba(12,21,38,.10); --hair-strong:rgba(12,21,38,.16);
+    --accent:#2563eb; --accent-deep:#1e40af; --accent-soft:rgba(37,99,235,.10); --amber:#f59e0b;
+    color-scheme: light;
+  }
+  :root[data-theme="dark"] {
+    --ink:#e7ecf3; --paper:#0a1120; --surface:#111a2b; --surface-2:#0e1626; --text:#d3dbe7;
+    --muted:#93a0b4; --hair:rgba(255,255,255,.10); --hair-strong:rgba(255,255,255,.16);
+    --accent:#5b8bff; --accent-deep:#3b6ef0; --accent-soft:rgba(91,139,255,.14); --amber:#fbbf24;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body {
+    margin: 0;
+    font-family: var(--font);
+    background: var(--paper);
+    color: var(--text);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  a { color: inherit; text-decoration: none; }
+  h1, h2, h3 { color: var(--ink); text-wrap: balance; margin: 0; letter-spacing: -0.02em; }
+  p { margin: 0; }
+  .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  /* ---------- Buttons ---------- */
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-weight: 600; font-size: 15px; font-family: var(--font);
+    padding: 13px 20px; border-radius: 12px; border: 1px solid transparent;
+    cursor: pointer; transition: transform .18s cubic-bezier(.2,.8,.2,1), background .18s, border-color .18s, box-shadow .18s;
+    white-space: nowrap;
+  }
+  .btn-primary { background: var(--accent); color: #fff; box-shadow: 0 8px 20px -8px var(--accent); }
+  .btn-primary:hover { background: var(--accent-deep); transform: translateY(-1px); }
+  .btn-ghost { background: transparent; color: var(--ink); border-color: var(--hair-strong); }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .btn:focus-visible { outline: 3px solid var(--accent-soft); outline-offset: 2px; }
+
+  /* ---------- Header ---------- */
+  header.nav {
+    position: sticky; top: 0; z-index: 50;
+    backdrop-filter: saturate(1.4) blur(12px);
+    background: color-mix(in srgb, var(--paper) 82%, transparent);
+    border-bottom: 1px solid var(--hair);
+  }
+  .nav-row { display: flex; align-items: center; justify-content: space-between; height: 66px; }
+  .brand { display: flex; align-items: center; gap: 11px; font-weight: 800; color: var(--ink); font-size: 18px; letter-spacing: -0.02em; }
+  .brand .mark { width: 30px; height: 30px; border-radius: 9px; flex: none; box-shadow: 0 4px 10px -3px var(--accent); }
+  .brand b { color: var(--accent); font-weight: 800; }
+  .nav-links { display: flex; align-items: center; gap: 28px; }
+  .nav-links a.link { color: var(--muted); font-weight: 500; font-size: 15px; transition: color .15s; }
+  .nav-links a.link:hover { color: var(--ink); }
+  .nav-cta { display: flex; align-items: center; gap: 10px; }
+  @media (max-width: 820px) { .nav-links .link { display: none; } }
+  /* Narrow screens: keep the primary CTA + theme toggle only, so nothing clips. */
+  @media (max-width: 600px) {
+    .nav-cta .btn-ghost { display: none; }
+    .nav-cta .btn-primary { padding: 11px 15px; font-size: 14px; }
+    .brand { font-size: 17px; }
+  }
+
+  /* ---------- Hero ---------- */
+  .hero { position: relative; overflow: hidden; }
+  .hero::before {
+    content: ""; position: absolute; inset: 0; z-index: 0;
+    background:
+      radial-gradient(60% 50% at 85% 0%, var(--accent-soft), transparent 70%),
+      radial-gradient(40% 40% at 5% 90%, color-mix(in srgb, var(--amber) 12%, transparent), transparent 70%);
+    pointer-events: none;
+  }
+  .hero-grid {
+    position: relative; z-index: 1;
+    display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 56px; align-items: center;
+    padding: 92px 0 84px;
+  }
+  .hero h1 { font-size: clamp(38px, 6vw, 62px); line-height: 1.02; font-weight: 900; }
+  .hero h1 .hl { position: relative; white-space: nowrap; color: var(--accent); }
+  .hero .lede { margin-top: 22px; font-size: clamp(17px, 2vw, 20px); color: var(--muted); max-width: 30ch; }
+  .hero-cta { display: flex; gap: 12px; margin-top: 32px; flex-wrap: wrap; }
+  .hero-note { margin-top: 18px; font-size: 13.5px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+  .hero-note svg { color: var(--accent); flex: none; }
+  @media (max-width: 900px) {
+    .hero-grid { grid-template-columns: 1fr; gap: 40px; padding: 60px 0 56px; }
+    .hero .lede { max-width: 46ch; }
+  }
+
+  /* ---------- Itinerary card (hero visual) ---------- */
+  .ticket {
+    position: relative; background: var(--surface); border: 1px solid var(--hair);
+    border-radius: 22px; box-shadow: var(--shadow-lg); padding: 22px; transform: rotate(-1.2deg);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .ticket { animation: floaty 7s ease-in-out infinite; }
+    @keyframes floaty { 0%,100%{ transform: rotate(-1.2deg) translateY(0);} 50%{ transform: rotate(-1.2deg) translateY(-8px);} }
+  }
+  .ticket-top { display: flex; align-items: center; justify-content: space-between; padding-bottom: 14px; border-bottom: 1px dashed var(--hair-strong); }
+  .ticket-route { display: flex; align-items: center; gap: 10px; font-weight: 800; color: var(--ink); letter-spacing: -0.01em; }
+  .ticket-route .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+  .ticket-route .line { width: 34px; height: 2px; background: repeating-linear-gradient(90deg, var(--hair-strong) 0 4px, transparent 4px 8px); }
+  .ticket-route .pin { color: var(--amber); }
+  .ticket-tag { font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: .08em; }
+  .stops { display: flex; flex-direction: column; gap: 2px; margin-top: 14px; }
+  .stop { display: grid; grid-template-columns: 62px 1fr auto; align-items: center; gap: 12px; padding: 11px 8px; border-radius: 12px; transition: background .15s; }
+  .stop:hover { background: var(--surface-2); }
+  .stop .time { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .stop .what { font-weight: 600; color: var(--ink); font-size: 14.5px; }
+  .stop .who { display: flex; }
+  .stop .who span {
+    width: 22px; height: 22px; border-radius: 50%; margin-left: -6px; border: 2px solid var(--surface);
+    font-size: 10px; font-weight: 700; color: #fff; display: grid; place-items: center;
+  }
+  .ticket-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--hair-strong); }
+  .money { font-weight: 700; color: var(--ink); }
+  .money small { color: var(--muted); font-weight: 500; font-family: var(--mono); font-size: 11px; display: block; letter-spacing: .06em; text-transform: uppercase; }
+  .split { font-family: var(--mono); font-size: 12px; color: var(--accent); background: var(--accent-soft); padding: 5px 9px; border-radius: 8px; }
+  .ticket .notch { position: absolute; width: 22px; height: 22px; background: var(--paper); border-radius: 50%; top: 50%; transform: translateY(-50%); }
+  .ticket .notch.l { left: -12px; } .ticket .notch.r { right: -12px; }
+
+  /* ---------- Section frame ---------- */
+  section { position: relative; }
+  .band { padding: 76px 0; }
+  .band-head { max-width: 44ch; margin-bottom: 46px; }
+  .band-head h2 { font-size: clamp(27px, 3.6vw, 38px); font-weight: 800; margin-top: 12px; }
+  .band-head p { margin-top: 14px; color: var(--muted); font-size: 17px; }
+
+  /* ---------- Feature route ---------- */
+  .route { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 760px) { .route { grid-template-columns: 1fr; } }
+  .feat {
+    position: relative; background: var(--surface); border: 1px solid var(--hair);
+    border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow);
+    transition: transform .2s cubic-bezier(.2,.8,.2,1), border-color .2s, box-shadow .2s;
+  }
+  .feat:hover { transform: translateY(-4px); border-color: color-mix(in srgb, var(--accent) 40%, var(--hair)); box-shadow: var(--shadow-lg); }
+  .feat .icn { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); margin-bottom: 16px; }
+  .feat h3 { font-size: 18px; font-weight: 700; }
+  .feat p { margin-top: 8px; color: var(--muted); font-size: 15px; }
+  .feat .stop-no { position: absolute; top: 20px; right: 22px; font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: .1em; }
+
+  /* ---------- Steps ---------- */
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; counter-reset: step; }
+  @media (max-width: 760px) { .steps { grid-template-columns: 1fr; } }
+  .step { padding: 26px; border-radius: var(--radius); border: 1px solid var(--hair); background: var(--surface); }
+  .step .num { font-family: var(--mono); font-weight: 700; color: var(--accent); font-size: 13px; letter-spacing: .1em; }
+  .step h3 { margin-top: 10px; font-size: 18px; }
+  .step p { margin-top: 8px; color: var(--muted); font-size: 15px; }
+
+  /* ---------- Mobile band ---------- */
+  .mobile { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; background: var(--ink); color: var(--paper); border-radius: 28px; padding: 56px; overflow: hidden; }
+  :root[data-theme="dark"] .mobile, :root:not([data-theme="light"]) .mobile { }
+  @media (prefers-color-scheme: dark) { .mobile { background: var(--surface); border: 1px solid var(--hair); } }
+  :root[data-theme="dark"] .mobile { background: var(--surface); border: 1px solid var(--hair); }
+  :root[data-theme="light"] .mobile { background: #0c1526; border: none; }
+  .mobile h2 { color: #fff; font-size: clamp(26px, 3.4vw, 36px); font-weight: 800; }
+  :root[data-theme="light"] .mobile h2 { color:#fff; }
+  .mobile p { margin-top: 14px; color: rgba(255,255,255,.72); font-size: 17px; max-width: 42ch; }
+  .mobile .pills { display: flex; gap: 10px; margin-top: 24px; flex-wrap: wrap; }
+  .mobile .pill { font-family: var(--mono); font-size: 12px; letter-spacing: .06em; padding: 8px 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,.20); color: rgba(255,255,255,.85); }
+  .phone { justify-self: center; width: 240px; height: 400px; border-radius: 34px; background: linear-gradient(160deg, #16213e, #0b1220); border: 8px solid #05070d; box-shadow: 0 40px 80px -30px rgba(0,0,0,.7); position: relative; overflow: hidden; }
+  .phone .status { height: 44px; display: flex; align-items: center; justify-content: center; }
+  .phone .status i { width: 70px; height: 6px; border-radius: 999px; background: rgba(255,255,255,.25); font-style: normal; }
+  .phone .p-body { padding: 6px 14px; }
+  .phone .p-card { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.08); border-radius: 12px; padding: 12px; margin-bottom: 10px; }
+  .phone .p-card .pt { font-size: 12px; color: #fff; font-weight: 600; }
+  .phone .p-card .ps { font-size: 10px; color: rgba(255,255,255,.5); font-family: var(--mono); margin-top: 3px; }
+  .phone .p-bar { height: 6px; border-radius: 999px; background: var(--accent); margin-top: 10px; width: 68%; }
+  @media (max-width: 820px) { .mobile { grid-template-columns: 1fr; padding: 40px 28px; text-align: left; } .phone { margin-top: 8px; } }
+
+  /* ---------- CTA ---------- */
+  .cta-band { text-align: center; padding: 84px 0; }
+  .cta-band h2 { font-size: clamp(28px, 4vw, 44px); font-weight: 900; }
+  .cta-band p { margin: 16px auto 0; color: var(--muted); font-size: 18px; max-width: 46ch; }
+  .cta-band .hero-cta { justify-content: center; }
+
+  /* ---------- Footer ---------- */
+  footer { border-top: 1px solid var(--hair); padding: 40px 0; }
+  .foot-row { display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+  .foot-links { display: flex; gap: 22px; flex-wrap: wrap; }
+  .foot-links a { color: var(--muted); font-size: 14px; }
+  .foot-links a:hover { color: var(--ink); }
+  .powered { font-size: 13px; color: var(--muted); }
+  .powered b { color: var(--ink); font-weight: 700; }
+
+  /* reveal on scroll */
+  .reveal { opacity: 0; transform: translateY(16px); transition: opacity .6s ease, transform .6s cubic-bezier(.2,.8,.2,1); }
+  .reveal.in { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; transition: none; } }
+
+  /* theme toggle */
+  .toggle { width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--hair-strong); background: transparent; color: var(--muted); display: grid; place-items: center; cursor: pointer; transition: color .15s, border-color .15s; }
+  .toggle:hover { color: var(--accent); border-color: var(--accent); }
+  /* Show the moon in light mode (click → dark), the sun in dark mode (click → light). */
+  .toggle .sun { display: none; } .toggle .moon { display: block; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .toggle .sun { display: block; }
+    :root:not([data-theme="light"]) .toggle .moon { display: none; }
+  }
+  :root[data-theme="dark"] .toggle .sun { display: block; }
+  :root[data-theme="dark"] .toggle .moon { display: none; }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap nav-row">
+    <a class="brand" href="/" aria-label="Kuk Trip home">
+      <svg class="mark" viewBox="0 0 48 48" aria-hidden="true"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2563eb"/><stop offset="1" stop-color="#1e40af"/></linearGradient></defs><rect width="48" height="48" rx="12" fill="url(#g)"/><path d="M14 30 L30 14 M30 14 L30 24 M30 14 L20 14" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="16" cy="32" r="2.6" fill="#fbbf24"/></svg>
+      Kuk<b>Trip</b>
+    </a>
+    <nav class="nav-links" aria-label="Primary">
+      <a class="link" href="#features">Features</a>
+      <a class="link" href="#how">How it works</a>
+      <a class="link" href="#mobile">Mobile</a>
+    </nav>
+    <div class="nav-cta">
+      <button class="toggle" id="themeToggle" aria-label="Switch theme" title="Switch theme">
+        <svg class="moon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="sun" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </button>
+      <a class="btn btn-ghost" href="https://trip.kuklabs.com/login">Sign in</a>
+      <a class="btn btn-primary" href="https://trip.kuklabs.com">Open Kuk Trip</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- HERO -->
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <span class="eyebrow">Collaborative travel planning</span>
+        <h1>Plan the whole trip<br />together, <span class="hl">in one place</span>.</h1>
+        <p class="lede">Build a day-by-day itinerary, map every stop, split the costs, and keep everyone in sync — online or off.</p>
+        <div class="hero-cta">
+          <a class="btn btn-primary" href="https://trip.kuklabs.com">Start planning free
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+          <a class="btn btn-ghost" href="#how">See how it works</a>
+        </div>
+        <p class="hero-note">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+          One Kuklabs Account signs you into every Kuklabs app.
+        </p>
+      </div>
+
+      <!-- Itinerary ticket -->
+      <div class="ticket" role="img" aria-label="Example day itinerary: Lisbon, day 2, three stops with who's going and a split cost">
+        <span class="notch l"></span><span class="notch r"></span>
+        <div class="ticket-top">
+          <div class="ticket-route">
+            <span class="dot"></span><span class="line"></span>LIS
+            <span class="line"></span><span class="pin">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.1 2 5 5.1 5 9c0 5.2 7 13 7 13s7-7.8 7-13c0-3.9-3.1-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5z"/></svg>
+            </span>
+          </div>
+          <span class="ticket-tag">DAY 02 · LISBON</span>
+        </div>
+        <div class="stops">
+          <div class="stop">
+            <span class="time">09:30</span><span class="what">Belém Tower &amp; pastéis</span>
+            <span class="who"><span style="background:#2563eb">A</span><span style="background:#f59e0b">M</span></span>
+          </div>
+          <div class="stop">
+            <span class="time">13:00</span><span class="what">Tram 28 to Alfama</span>
+            <span class="who"><span style="background:#2563eb">A</span><span style="background:#f59e0b">M</span><span style="background:#10b981">R</span></span>
+          </div>
+          <div class="stop">
+            <span class="time">20:00</span><span class="what">Fado dinner, Bairro Alto</span>
+            <span class="who"><span style="background:#2563eb">A</span><span style="background:#10b981">R</span></span>
+          </div>
+        </div>
+        <div class="ticket-foot">
+          <div class="money">€ 186.00 <small>Day budget</small></div>
+          <span class="split">split ÷ 3 = €62</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section id="features" class="band">
+    <div class="wrap">
+      <div class="band-head">
+        <span class="eyebrow">Every stop on the route</span>
+        <h2>Everything a trip needs, nothing it doesn't.</h2>
+        <p>From the first idea to the last receipt — Kuk Trip keeps the plan, the map, the money, and the group in one shared place.</p>
+      </div>
+      <div class="route">
+        <article class="feat reveal">
+          <span class="stop-no">01</span>
+          <div class="icn"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+          <h3>Day-by-day itinerary</h3>
+          <p>Drag stops onto a timeline, set times and transport, and watch the day fill in. Reorder anything — the plan updates for everyone.</p>
+        </article>
+        <article class="feat reveal">
+          <span class="stop-no">02</span>
+          <div class="icn"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 20l-6-3V4l6 3 6-3 6 3v13l-6-3-6 3z"/><path d="M9 7v13M15 4v13"/></svg></div>
+          <h3>Places on a live map</h3>
+          <p>Search points of interest, pin them, and see the whole route laid out. Distances and clusters make each day easy to read.</p>
+        </article>
+        <article class="feat reveal">
+          <span class="stop-no">03</span>
+          <div class="icn"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+          <h3>Budget &amp; expense splitting</h3>
+          <p>Track spend per day, log who paid, and split fairly across the group. Everyone sees exactly what they owe — no spreadsheet.</p>
+        </article>
+        <article class="feat reveal">
+          <span class="stop-no">04</span>
+          <div class="icn"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7h-9M14 17H5M17 3l3 4-3 4M7 21l-3-4 3-4"/></svg></div>
+          <h3>Reservations &amp; docs</h3>
+          <p>Keep flights, hotels, and bookings attached to the right day, with files and confirmation numbers a tap away.</p>
+        </article>
+        <article class="feat reveal">
+          <span class="stop-no">05</span>
+          <div class="icn"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+          <h3>Plan as a group</h3>
+          <p>Invite friends or family, leave notes, run a quick poll, and pack together — everyone contributes, nobody gets left out.</p>
+        </article>
+        <article class="feat reveal">
+          <span class="stop-no">06</span>
+          <div class="icn"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg></div>
+          <h3>Works offline</h3>
+          <p>Lost signal in a new city? Your itinerary, map, and lists stay available and sync back up the moment you're online.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how" class="band" style="background:var(--surface-2);">
+    <div class="wrap">
+      <div class="band-head">
+        <span class="eyebrow">Three stops to takeoff</span>
+        <h2>From idea to itinerary in minutes.</h2>
+      </div>
+      <div class="steps">
+        <div class="step reveal">
+          <span class="num">STEP 01</span>
+          <h3>Create the trip</h3>
+          <p>Name it, set the dates, and add the crew. Sign in once with your Kuklabs Account — no new password.</p>
+        </div>
+        <div class="step reveal">
+          <span class="num">STEP 02</span>
+          <h3>Fill the days</h3>
+          <p>Add places, times, stays, and a budget. Drag things around until the plan feels right for everyone.</p>
+        </div>
+        <div class="step reveal">
+          <span class="num">STEP 03</span>
+          <h3>Go — together</h3>
+          <p>Everyone carries the same live plan on their phone, online or off. Split costs as you spend.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MOBILE -->
+  <section id="mobile" class="band">
+    <div class="wrap">
+      <div class="mobile reveal">
+        <div>
+          <span class="eyebrow" style="color:var(--amber)">Native Android app</span>
+          <h2>Your whole trip, in your pocket.</h2>
+          <p>Kuk Trip ships a native Android app built in Kotlin — fast, offline-ready, and made for the road. iOS and more are on the way.</p>
+          <div class="pills">
+            <span class="pill">KOTLIN · JETPACK COMPOSE</span>
+            <span class="pill">OFFLINE-FIRST</span>
+            <span class="pill">com.kuklabs.trip</span>
+          </div>
+        </div>
+        <div class="phone" aria-hidden="true">
+          <div class="status"><i></i></div>
+          <div class="p-body">
+            <div class="p-card"><div class="pt">Lisbon · Day 2</div><div class="ps">3 STOPS · €186</div><div class="p-bar"></div></div>
+            <div class="p-card"><div class="pt">Belém Tower</div><div class="ps">09:30 · A M</div></div>
+            <div class="p-card"><div class="pt">Tram 28 → Alfama</div><div class="ps">13:00 · A M R</div></div>
+            <div class="p-card"><div class="pt">Fado dinner</div><div class="ps">20:00 · A R</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-band">
+    <div class="wrap">
+      <h2>Where are we going next?</h2>
+      <p>Start your first trip in minutes. It's free to plan, and everyone you invite is one click away.</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="https://trip.kuklabs.com">Open Kuk Trip
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+        <a class="btn btn-ghost" href="https://trip.kuklabs.com/login">Continue with Kuklabs</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap foot-row">
+    <a class="brand" href="/" aria-label="Kuk Trip home">
+      <svg class="mark" viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="12" fill="#2563eb"/><path d="M14 30 L30 14 M30 14 L30 24 M30 14 L20 14" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="16" cy="32" r="2.6" fill="#fbbf24"/></svg>
+      Kuk<b>Trip</b>
+    </a>
+    <nav class="foot-links" aria-label="Footer">
+      <a href="#features">Features</a>
+      <a href="#how">How it works</a>
+      <a href="#mobile">Mobile app</a>
+      <a href="https://trip.kuklabs.com/login">Sign in</a>
+    </nav>
+    <p class="powered">Powered by <b>Kuklabs</b></p>
+  </div>
+</footer>
+
+<script>
+  // Theme toggle — persists choice; stamps data-theme so it wins over the media query.
+  (function () {
+    var root = document.documentElement;
+    var saved = null;
+    try { saved = localStorage.getItem("kuktrip-theme"); } catch (e) {}
+    if (saved === "dark" || saved === "light") root.setAttribute("data-theme", saved);
+    function current() {
+      var attr = root.getAttribute("data-theme");
+      if (attr) return attr;
+      return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    }
+    var btn = document.getElementById("themeToggle");
+    if (btn) btn.addEventListener("click", function () {
+      var next = current() === "dark" ? "light" : "dark";
+      root.setAttribute("data-theme", next);
+      try { localStorage.setItem("kuktrip-theme", next); } catch (e) {}
+    });
+  })();
+
+  // Reveal on scroll (skipped when reduced motion is preferred).
+  (function () {
+    var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var els = document.querySelectorAll(".reveal");
+    if (reduce || !("IntersectionObserver" in window)) {
+      els.forEach(function (el) { el.classList.add("in"); });
+      return;
+    }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); }
+      });
+    }, { rootMargin: "0px 0px -8% 0px", threshold: 0.08 });
+    els.forEach(function (el) { io.observe(el); });
+  })();
+</script>
+</body>
+</html>
