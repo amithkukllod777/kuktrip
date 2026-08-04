@@ -96,9 +96,9 @@ export default defineConfig({
         ],
       },
       manifest: {
-        name: 'TREK \u2014 Travel Planner',
-        short_name: 'TREK',
-        description: 'Travel Resource & Exploration Kit',
+        name: 'Kuk Trip \u2014 Collaborative Travel Planning',
+        short_name: 'Kuk Trip',
+        description: 'Plan trips together \u2014 itinerary, map, budget, and more. One Kuklabs Account.',
         theme_color: '#111827',
         background_color: '#0f172a',
         display: 'standalone',
