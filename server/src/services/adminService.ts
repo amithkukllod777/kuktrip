@@ -365,6 +365,16 @@ export async function checkVersion(): Promise<VersionInfo> {
   const currentVersion: string = process.env.APP_VERSION || require('../../package.json').version;
   const isPrerelease = currentVersion.includes('-pre.');
   const fallback: VersionInfo = { current: currentVersion, latest: currentVersion, update_available: false, is_docker: isDocker, is_prerelease: isPrerelease };
+
+  // Kuk Trip is a rebranded product with its own release cadence — it does NOT
+  // track upstream TREK releases. Short-circuit the check so the admin panel
+  // never shows an upstream "TREK vX.Y.Z is available" banner and the server
+  // never phones home to the upstream repo. (Set KUKTRIP_UPSTREAM_UPDATE_CHECK=1
+  // to restore the original behaviour for local/self-host TREK use.)
+  if (process.env.KUKTRIP_UPSTREAM_UPDATE_CHECK !== '1') {
+    return fallback;
+  }
+
   let result: VersionInfo;
   try {
     if (isPrerelease) {

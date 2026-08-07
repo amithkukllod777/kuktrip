@@ -2,7 +2,7 @@
  * Unit tests for checkAndNotifyVersion() in adminService.
  * Covers VNOTIF-001 to VNOTIF-007.
  */
-import { describe, it, expect, vi, beforeAll, beforeEach, afterAll } from 'vitest';
+import { describe, it, expect, vi, beforeAll, beforeEach, afterEach, afterAll } from 'vitest';
 
 const { testDb, dbMock } = vi.hoisted(() => {
   const Database = require('better-sqlite3');
@@ -65,6 +65,13 @@ beforeEach(() => {
   resetTestDb(testDb);
   __clearVersionCacheForTests();
   vi.unstubAllGlobals();
+  // These tests cover the upstream version-check/notify behaviour, which Kuk Trip
+  // ships disabled by default — opt in for the suite.
+  process.env.KUKTRIP_UPSTREAM_UPDATE_CHECK = '1';
+});
+
+afterEach(() => {
+  delete process.env.KUKTRIP_UPSTREAM_UPDATE_CHECK;
 });
 
 afterAll(() => {
