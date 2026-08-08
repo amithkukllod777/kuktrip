@@ -12,6 +12,7 @@ import { listBudgetItems } from '../../services/budgetService';
 import { listReservations } from '../../services/reservationService';
 import { listFiles } from '../../services/fileService';
 import { searchUnsplashPhotos, getUnsplashKey } from '../../services/unsplashService';
+import { shadowCompareTrip, shadowCompareTripList } from '../../services/tripShadowParity';
 
 /**
  * Thin Nest wrapper around the existing trip service + the per-domain list
@@ -35,7 +36,9 @@ export class TripsService {
   }
 
   list(userId: number, archived: number) {
-    return tripSvc.listTrips(userId, archived);
+    const rows = tripSvc.listTrips(userId, archived);
+    shadowCompareTripList(userId, archived, rows as unknown[]);
+    return rows;
   }
 
   create(userId: number, data: Parameters<typeof tripSvc.createTrip>[1]) {
@@ -43,7 +46,9 @@ export class TripsService {
   }
 
   get(tripId: string, userId: number) {
-    return tripSvc.getTrip(tripId, userId);
+    const trip = tripSvc.getTrip(tripId, userId);
+    shadowCompareTrip(userId, tripId, trip);
+    return trip;
   }
 
   getRaw(tripId: string) {
