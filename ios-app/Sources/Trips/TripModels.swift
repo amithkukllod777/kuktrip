@@ -63,9 +63,54 @@ struct TripDayNote: Codable, Identifiable, Hashable {
     }
 }
 
+struct TripPlace: Codable, Identifiable, Hashable {
+    let id: Int
+    let tripId: Int
+    let name: String
+    let description: String?
+    let lat: Double?
+    let lng: Double?
+    let address: String?
+    let price: Double?
+    let currency: String?
+    let imageURL: String?
+    let website: String?
+    let phone: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id, name, description, lat, lng, address, price, currency, website, phone
+        case tripId = "trip_id"
+        case imageURL = "image_url"
+    }
+}
+
+struct TripReservation: Codable, Identifiable, Hashable {
+    let id: Int
+    let tripId: Int
+    let title: String
+    let type: String
+    let status: String
+    let reservationTime: String?
+    let reservationEndTime: String?
+    let location: String?
+    let confirmationNumber: String?
+    let notes: String?
+    let url: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id, title, type, status, location, notes, url
+        case tripId = "trip_id"
+        case reservationTime = "reservation_time"
+        case reservationEndTime = "reservation_end_time"
+        case confirmationNumber = "confirmation_number"
+    }
+}
+
 struct TripsEnvelope: Decodable { let trips: [Trip] }
 struct TripEnvelope: Decodable { let trip: Trip }
 struct DayEnvelope: Decodable { let day: TripDay }
+struct PlacesEnvelope: Decodable { let places: [TripPlace] }
+struct ReservationsEnvelope: Decodable { let reservations: [TripReservation] }
 
 struct CreateTripRequest: Encodable {
     let title: String
