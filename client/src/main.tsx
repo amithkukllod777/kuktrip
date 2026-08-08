@@ -2,6 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App'
+import PublicHomePage from './pages/PublicHomePage'
 // Self-hosted Poppins (bundled, same-origin) so the app font can't be blocked by
 // ad/tracker blockers the way the Google Fonts CDN can.
 import '@fontsource/poppins/300.css'
@@ -30,15 +31,23 @@ import { maybeInstallTouchDragPolyfill } from './utils/touchDragPolyfill'
 import { startConnectivityProbe } from './sync/connectivity'
 import { requestPersistentStorage } from './sync/persistentStorage'
 
-maybeInstallTouchDragPolyfill()
-startConnectivityProbe()
-// Keep offline data (map tiles, file blobs, IndexedDB) exempt from eviction.
-requestPersistentStorage()
+const isPublicHome = window.location.pathname === '/'
+
+if (!isPublicHome) {
+  maybeInstallTouchDragPolyfill()
+  startConnectivityProbe()
+  // Keep offline data (map tiles, file blobs, IndexedDB) exempt from eviction.
+  requestPersistentStorage()
+}
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
+    {isPublicHome ? (
+      <PublicHomePage />
+    ) : (
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    )}
   </React.StrictMode>,
 )
