@@ -554,14 +554,21 @@ describe('checkVersion', () => {
   });
 
   it('ADMIN-SVC-055 — returns update_available:true when latest version is greater than current', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({ tag_name: 'v999.0.0', html_url: 'https://github.com/example/releases/tag/v999.0.0' }),
-    }));
-    const result = await checkVersion() as any;
-    expect(result.update_available).toBe(true);
-    expect(result.latest).toBe('999.0.0');
-    expect(result.release_url).toBe('https://github.com/example/releases/tag/v999.0.0');
+    // Kuk Trip disables the upstream update check by default; this test exercises
+    // the original TREK behaviour behind the opt-in flag.
+    process.env.KUKTRIP_UPSTREAM_UPDATE_CHECK = '1';
+    try {
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ tag_name: 'v999.0.0', html_url: 'https://github.com/example/releases/tag/v999.0.0' }),
+      }));
+      const result = await checkVersion() as any;
+      expect(result.update_available).toBe(true);
+      expect(result.latest).toBe('999.0.0');
+      expect(result.release_url).toBe('https://github.com/example/releases/tag/v999.0.0');
+    } finally {
+      delete process.env.KUKTRIP_UPSTREAM_UPDATE_CHECK;
+    }
   });
 });
 

@@ -172,7 +172,23 @@ describe('GET /api/system-notices/active', () => {
   });
 
   it('re-surfaces a per-version notice after an upgrade but hides it within the same version', async () => {
-    const TY = 'thank-you-support';
+    // Uses a locally-injected recurring notice so the test exercises the
+    // per-version feature itself, independent of any specific shipped notice.
+    const TY = 'test-per-version-notice';
+    const PER_VERSION_NOTICE: SystemNotice = {
+      id: TY,
+      display: 'modal',
+      severity: 'info',
+      titleKey: 'system_notice.test_per_version.title',
+      bodyKey: 'system_notice.test_per_version.body',
+      dismissible: true,
+      conditions: [],
+      publishedAt: '2026-01-01T00:00:00Z',
+      priority: 100,
+      recurring: 'per-version',
+    };
+    SYSTEM_NOTICES.push(PER_VERSION_NOTICE);
+    try {
     const { user } = createUser(testDb);
     testDb.prepare('UPDATE users SET login_count = 5, first_seen_version = ? WHERE id = ?').run('3.0.0', user.id);
 
@@ -184,7 +200,7 @@ describe('GET /api/system-notices/active', () => {
       return res.body.some((n: { id: string }) => n.id === TY);
     };
 
-    // Fresh user with no dismissal: the recurring thank-you shows.
+    // Fresh user with no dismissal: the recurring notice shows.
     expect(await shows()).toBe(true);
 
     // Dismissed at an old version → it returns once the running version is newer.
@@ -198,6 +214,10 @@ describe('GET /api/system-notices/active', () => {
       'UPDATE user_notice_dismissals SET dismissed_app_version = ? WHERE user_id = ? AND notice_id = ?'
     ).run('99.0.0', user.id, TY);
     expect(await shows()).toBe(false);
+    } finally {
+      const idx = SYSTEM_NOTICES.indexOf(PER_VERSION_NOTICE);
+      if (idx !== -1) SYSTEM_NOTICES.splice(idx, 1);
+    }
   });
 });
 

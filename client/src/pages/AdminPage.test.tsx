@@ -16,10 +16,6 @@ vi.mock('../components/Admin/BackupPanel', () => ({
   default: () => <div data-testid="backup-panel" />,
 }));
 
-vi.mock('../components/Admin/GitHubPanel', () => ({
-  default: () => <div data-testid="github-panel" />,
-}));
-
 vi.mock('../components/Admin/AddonManager', () => ({
   default: () => <div data-testid="addon-manager" />,
 }));
@@ -213,19 +209,6 @@ describe('AdminPage', () => {
       fireEvent.click(screen.getByRole('button', { name: /^audit$/i }));
 
       expect(screen.getByTestId('audit-log-panel')).toBeInTheDocument();
-    });
-  });
-
-  describe('FE-PAGE-ADMIN-011: GitHub tab renders GitHubPanel', () => {
-    it('clicking GitHub tab shows github-panel', async () => {
-      seedStore(useAuthStore, { isAuthenticated: true, user: buildAdmin() });
-      render(<AdminPage />);
-
-      await waitFor(() => expect(screen.getByRole('button', { name: /^users$/i })).toBeInTheDocument());
-
-      fireEvent.click(screen.getByRole('button', { name: /^github$/i }));
-
-      expect(screen.getByTestId('github-panel')).toBeInTheDocument();
     });
   });
 
