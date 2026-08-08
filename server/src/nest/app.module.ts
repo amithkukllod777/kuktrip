@@ -44,12 +44,13 @@ import { AddonsModule } from './addons/addons.module';
 import { PluginsModule } from './plugins/plugins.module';
 import { AiModule } from './ai/ai.module';
 import { ExploreModule } from './explore/explore.module';
+import { ExploreModerationModule } from './explore-moderation/explore-moderation.module';
 import { TrekExceptionFilter } from './common/trek-exception.filter';
 import { SpaFallbackFilter } from './platform/spa-fallback.filter';
 import { IdempotencyInterceptor } from './common/idempotency.interceptor';
 
 @Module({
-  imports: [DatabaseModule, WeatherModule, HelpModule, AirportsModule, ConfigModule, SystemNoticesModule, MapsModule, CategoriesModule, TagsModule, NotificationsModule, AtlasModule, VacayModule, PackingModule, TodoModule, BudgetModule, ReservationsModule, DaysModule, AssignmentsModule, PlacesModule, TripsModule, CollabModule, FilesModule, PhotosModule, MemoriesModule, AirtrailModule, JourneyModule, CollectionsModule, ShareModule, TripInviteModule, TransitModule, FeedsModule, SettingsModule, BackupModule, AuthModule, OidcModule, OauthModule, AdminModule, AddonsModule, PluginsModule, BookingImportModule, AiModule, ExploreModule],
+  imports: [DatabaseModule, WeatherModule, HelpModule, AirportsModule, ConfigModule, SystemNoticesModule, MapsModule, CategoriesModule, TagsModule, NotificationsModule, AtlasModule, VacayModule, PackingModule, TodoModule, BudgetModule, ReservationsModule, DaysModule, AssignmentsModule, PlacesModule, TripsModule, CollabModule, FilesModule, PhotosModule, MemoriesModule, AirtrailModule, JourneyModule, CollectionsModule, ShareModule, TripInviteModule, TransitModule, FeedsModule, SettingsModule, BackupModule, AuthModule, OidcModule, OauthModule, AdminModule, AddonsModule, PluginsModule, BookingImportModule, AiModule, ExploreModule, ExploreModerationModule],
   controllers: [HealthController],
   providers: [
     HealthService,
