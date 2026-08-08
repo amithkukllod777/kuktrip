@@ -10,6 +10,7 @@ import LoginPage from './pages/LoginPage'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
 import DashboardPage from './pages/DashboardPage'
+import AiTripPlannerPage from './pages/AiTripPlannerPage'
 import TripPlannerPage from './pages/TripPlannerPage'
 import FilesPage from './pages/FilesPage'
 import AdminPage from './pages/AdminPage'
@@ -36,7 +37,6 @@ import { useInAppNotificationListener } from './hooks/useInAppNotificationListen
 import { registerSyncTriggers, unregisterSyncTriggers } from './sync/syncTriggers'
 import OfflineBanner from './components/Layout/OfflineBanner'
 import { SystemNoticeHost } from './components/SystemNotices/SystemNoticeHost.js'
-// Notice action registrations (side-effect imports):
 import './pages/Trips/noticeActions.js'
 
 interface ProtectedRouteProps {
@@ -117,8 +117,6 @@ export default function App() {
 
   useEffect(() => {
     if (!location.pathname.startsWith('/shared/') && !location.pathname.startsWith('/public/') && !location.pathname.startsWith('/login')) {
-      // If the persist snapshot already has an authenticated user, validate
-      // silently so the PWA shell renders immediately without a spinner.
       const alreadyAuthenticated = useAuthStore.getState().isAuthenticated
       if (alreadyAuthenticated) {
         useAuthStore.setState({ isLoading: false })
@@ -191,7 +189,6 @@ export default function App() {
         isSharedPage,
       })
     run()
-    // Re-resolve on OS theme change while in auto mode.
     if (!isSharedPage && settings.dark_mode === 'auto') {
       const mq = window.matchMedia('(prefers-color-scheme: dark)')
       const handler = () => run()
@@ -220,7 +217,6 @@ export default function App() {
         <Route path="/register" element={<LoginPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
-        {/* OAuth 2.1 consent page — intentionally outside ProtectedRoute */}
         <Route path="/oauth/consent" element={<OAuthAuthorizePage />} />
         <Route
           path="/dashboard"
@@ -230,8 +226,14 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-        {/* Trip invite link (#1143) — behind ProtectedRoute so an anonymous
-            visitor is redirected to /login (never registration) and returns here. */}
+        <Route
+          path="/ai-plan"
+          element={
+            <ProtectedRoute>
+              <AiTripPlannerPage />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/join/:token"
           element={
