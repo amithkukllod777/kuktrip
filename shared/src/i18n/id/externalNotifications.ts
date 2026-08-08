@@ -2,10 +2,10 @@ import type { NotificationLocale } from '../externalNotifications/types';
 
 const id: NotificationLocale = {
   email: {
-    footer: 'Anda menerima ini karena Anda telah mengaktifkan notifikasi di TREK.',
+    footer: 'Anda menerima ini karena Anda telah mengaktifkan notifikasi di Kuk Trip.',
     manage: 'Kelola preferensi di Pengaturan',
     madeWith: 'Dibuat dengan',
-    openTrek: 'Buka TREK',
+    openTrek: 'Buka Kuk Trip',
   },
   events: {
     trip_invite: (p) => ({
@@ -26,11 +26,11 @@ const id: NotificationLocale = {
     }),
     vacay_invite: (p) => ({
       title: 'Undangan Penggabungan Vacay',
-      body: `${p.actor} mengundang Anda untuk menggabungkan rencana liburan. Buka TREK untuk menerima atau menolak.`,
+      body: `${p.actor} mengundang Anda untuk menggabungkan rencana liburan. Buka Kuk Trip untuk menerima atau menolak.`,
     }),
     collection_invite: (p) => ({
       title: 'Undangan koleksi',
-      body: `${p.actor} mengundang Anda untuk berbagi koleksi. Buka TREK untuk menerima atau menolak.`,
+      body: `${p.actor} mengundang Anda untuk berbagi koleksi. Buka Kuk Trip untuk menerima atau menolak.`,
     }),
     photos_shared: (p) => ({
       title: `${p.count} foto dibagikan`,
@@ -45,8 +45,8 @@ const id: NotificationLocale = {
       body: `${p.actor} menugaskan Anda ke kategori "${p.category}" di "${p.trip}".`,
     }),
     version_available: (p) => ({
-      title: 'Versi TREK baru tersedia',
-      body: `TREK ${p.version} sekarang tersedia. Kunjungi panel admin untuk memperbarui.`,
+      title: 'Versi Kuk Trip baru tersedia',
+      body: `Kuk Trip ${p.version} sekarang tersedia. Kunjungi panel admin untuk memperbarui.`,
     }),
     synology_session_cleared: () => ({
       title: 'Sesi Synology dihapus',
@@ -57,7 +57,7 @@ const id: NotificationLocale = {
   passwordReset: {
     subject: 'Setel ulang kata sandi Anda',
     greeting: 'Halo',
-    body: 'Kami menerima permintaan untuk menyetel ulang kata sandi akun TREK Anda. Klik tombol di bawah untuk menetapkan kata sandi baru.',
+    body: 'Kami menerima permintaan untuk menyetel ulang kata sandi akun Kuk Trip Anda. Klik tombol di bawah untuk menetapkan kata sandi baru.',
     ctaIntro: 'Setel ulang kata sandi',
     expiry: 'Tautan ini kedaluwarsa dalam 60 menit.',
     ignore: 'Jika Anda tidak meminta ini, Anda dapat mengabaikan email ini — kata sandi Anda tidak akan berubah.',
