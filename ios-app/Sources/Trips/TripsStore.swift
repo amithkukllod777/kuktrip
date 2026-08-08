@@ -7,6 +7,8 @@ final class TripsStore {
     var trips: [Trip] = []
     var selectedTrip: Trip?
     var days: [TripDay] = []
+    var places: [TripPlace] = []
+    var reservations: [TripReservation] = []
     var isLoading = false
     var errorMessage: String?
 
@@ -27,8 +29,12 @@ final class TripsStore {
         do {
             async let fresh = client.getTrip(id: trip.id)
             async let itinerary = client.listDays(tripId: trip.id)
+            async let tripPlaces = client.listPlaces(tripId: trip.id)
+            async let tripReservations = client.listReservations(tripId: trip.id)
             selectedTrip = try await fresh
             days = try await itinerary
+            places = try await tripPlaces
+            reservations = try await tripReservations
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -53,6 +59,8 @@ final class TripsStore {
             trips.insert(trip, at: 0)
             selectedTrip = trip
             days = (try? await client.listDays(tripId: trip.id)) ?? []
+            places = (try? await client.listPlaces(tripId: trip.id)) ?? []
+            reservations = (try? await client.listReservations(tripId: trip.id)) ?? []
             return trip
         } catch {
             errorMessage = error.localizedDescription

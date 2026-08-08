@@ -28,6 +28,16 @@ actor TripClient {
         return try decoder.decode([TripDay].self, from: data)
     }
 
+    func listPlaces(tripId: Int) async throws -> [TripPlace] {
+        let data = try await request(path: "api/trips/\(tripId)/places", method: "GET", body: Optional<String>.none)
+        return try decoder.decode(PlacesEnvelope.self, from: data).places
+    }
+
+    func listReservations(tripId: Int) async throws -> [TripReservation] {
+        let data = try await request(path: "api/trips/\(tripId)/reservations", method: "GET", body: Optional<String>.none)
+        return try decoder.decode(ReservationsEnvelope.self, from: data).reservations
+    }
+
     func addDay(tripId: Int) async throws -> TripDay {
         let data = try await request(path: "api/trips/\(tripId)/days", method: "POST", body: CreateDayRequest())
         return try decoder.decode(DayEnvelope.self, from: data).day

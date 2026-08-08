@@ -46,4 +46,16 @@ interface TripApi {
         @Path("tripId") tripId: Int,
         @Body body: CreateDayBody = CreateDayBody(),
     ): Response<DayEnvelope>
+
+    @GET("api/trips/{tripId}/places")
+    suspend fun listPlaces(
+        @Header("Authorization") authorization: String,
+        @Path("tripId") tripId: Int,
+    ): Response<PlacesEnvelope>
+
+    @GET("api/trips/{tripId}/reservations")
+    suspend fun listReservations(
+        @Header("Authorization") authorization: String,
+        @Path("tripId") tripId: Int,
+    ): Response<ReservationsEnvelope>
 }

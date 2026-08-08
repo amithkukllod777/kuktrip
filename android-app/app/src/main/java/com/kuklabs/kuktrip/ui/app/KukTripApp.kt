@@ -60,6 +60,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.kuklabs.kuktrip.data.trips.Day
+import com.kuklabs.kuktrip.data.trips.Place
+import com.kuklabs.kuktrip.data.trips.Reservation
 import com.kuklabs.kuktrip.data.trips.Trip
 import com.kuklabs.kuktrip.ui.trips.TripsViewModel
 
@@ -208,7 +210,7 @@ private fun TripDetailScreen(vm: TripsViewModel) {
             Text(trip.title, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
             Text(listOfNotNull(trip.startDate, trip.endDate).joinToString(" → "), color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.height(8.dp))
-            Text(trip.description.orEmpty())
+            if (!trip.description.isNullOrBlank()) Text(trip.description)
         }
         item {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -217,7 +219,23 @@ private fun TripDetailScreen(vm: TripsViewModel) {
             }
         }
         if (s.days.isEmpty()) item { Text("No itinerary days yet.", color = MaterialTheme.colorScheme.onSurfaceVariant) }
-        items(s.days, key = { it.id }) { day -> DayCard(day) }
+        items(s.days, key = { "day-${it.id}" }) { day -> DayCard(day) }
+
+        item { SectionTitle("Places", "${s.places.size} saved") }
+        if (s.places.isEmpty()) item { Text("No saved places yet.", color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        items(s.places, key = { "place-${it.id}" }) { place -> PlaceCard(place, trip.currency) }
+
+        item { SectionTitle("Bookings", "${s.reservations.size} reservations") }
+        if (s.reservations.isEmpty()) item { Text("No reservations yet.", color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        items(s.reservations, key = { "reservation-${it.id}" }) { reservation -> ReservationCard(reservation) }
+    }
+}
+
+@Composable
+private fun SectionTitle(title: String, meta: String) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+        Text(meta, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -232,6 +250,34 @@ private fun DayCard(day: Day) {
                 Spacer(Modifier.height(8.dp))
                 day.notesItems.forEach { note -> Text("${note.time ?: ""} ${note.icon ?: "•"} ${note.text}".trim()) }
             }
+        }
+    }
+}
+
+@Composable
+private fun PlaceCard(place: Place, tripCurrency: String) {
+    Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
+        Column(Modifier.padding(16.dp)) {
+            Text(place.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+            if (!place.address.isNullOrBlank()) Text(place.address, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (!place.description.isNullOrBlank()) { Spacer(Modifier.height(6.dp)); Text(place.description) }
+            place.price?.let { Text("Estimated: $it ${place.currency ?: tripCurrency}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        }
+    }
+}
+
+@Composable
+private fun ReservationCard(reservation: Reservation) {
+    Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
+        Column(Modifier.padding(16.dp)) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(reservation.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                Text(reservation.status.replaceFirstChar { it.uppercase() }, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Text(reservation.type.replaceFirstChar { it.uppercase() }, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+            reservation.reservationTime?.let { Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            if (!reservation.location.isNullOrBlank()) Text(reservation.location)
+            if (!reservation.confirmationNumber.isNullOrBlank()) Text("Confirmation: ${reservation.confirmationNumber}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

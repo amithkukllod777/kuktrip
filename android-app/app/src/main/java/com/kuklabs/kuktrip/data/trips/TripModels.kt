@@ -50,5 +50,36 @@ data class DayNote(
     val icon: String? = null,
 )
 
+data class Place(
+    val id: Int,
+    @SerializedName("trip_id") val tripId: Int,
+    val name: String,
+    val description: String? = null,
+    val lat: Double? = null,
+    val lng: Double? = null,
+    val address: String? = null,
+    val price: Double? = null,
+    val currency: String? = null,
+    @SerializedName("image_url") val imageUrl: String? = null,
+    val website: String? = null,
+    val phone: String? = null,
+)
+
+data class Reservation(
+    val id: Int,
+    @SerializedName("trip_id") val tripId: Int,
+    val title: String,
+    val type: String = "other",
+    val status: String = "planned",
+    @SerializedName("reservation_time") val reservationTime: String? = null,
+    @SerializedName("reservation_end_time") val reservationEndTime: String? = null,
+    val location: String? = null,
+    @SerializedName("confirmation_number") val confirmationNumber: String? = null,
+    val notes: String? = null,
+    val url: String? = null,
+)
+
 data class DayEnvelope(val day: Day)
+data class PlacesEnvelope(val places: List<Place> = emptyList())
+data class ReservationsEnvelope(val reservations: List<Reservation> = emptyList())
 data class CreateDayBody(val date: String? = null, val notes: String? = null, val position: Int? = null)
