@@ -3,11 +3,16 @@ import { getTripFromSharedMysql, listTripsFromSharedMysql, type MysqlTripRow } f
 
 const loggedMissingIdentity = new Set<number>();
 
+/**
+ * Compare only product semantics that are expected to be byte-equivalent after
+ * migration. SQLite `user_id` is a transitional local FK while MySQL stores the
+ * authoritative shared Kuklabs users.id, so identity columns are intentionally
+ * excluded from the parity payload.
+ */
 function normalizeTrip(value: any) {
   if (!value) return null;
   return {
     id: Number(value.id),
-    user_id: Number(value.user_id),
     title: String(value.title || ''),
     description: value.description == null ? null : String(value.description),
     start_date: value.start_date == null ? null : String(value.start_date).slice(0, 10),
