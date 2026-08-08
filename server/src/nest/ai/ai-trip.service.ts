@@ -1,4 +1,10 @@
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
+import { db } from '../../db/database';
+import { createAssignment } from '../../services/assignmentService';
+import { listDays, updateDay } from '../../services/dayService';
+import { onPlaceCreated } from '../../services/journeyService';
+import { createPlace } from '../../services/placeService';
+import { createTrip, getTrip } from '../../services/tripService';
 
 export interface TripPlanInput {
   destination: string;
@@ -163,6 +169,74 @@ export class AiTripService {
       proposal,
       mutationApplied: false,
       requiresReview: true,
+    };
+  }
+
+  applyTripPlan(userId: number, proposal: TripPlanProposal) {
+    const createdPlaceIds: number[] = [];
+    const datedDays = proposal.days.map(day => day.date).filter((date): date is string => Boolean(date));
+    const startDate = datedDays[0] ?? null;
+    const endDate = datedDays.length > 1 ? datedDays[datedDays.length - 1] : startDate;
+
+    const apply = db.transaction(() => {
+      const created = createTrip(userId, {
+        title: proposal.title,
+        description: proposal.summary || null,
+        start_date: startDate,
+        end_date: endDate,
+        currency: proposal.currency || 'EUR',
+        day_count: proposal.days.length,
+      });
+
+      const { days } = listDays(created.tripId);
+      const dayByNumber = new Map(days.map(day => [Number(day.day_number), day]));
+      let activityCount = 0;
+
+      for (let index = 0; index < proposal.days.length; index += 1) {
+        const proposedDay = proposal.days[index];
+        const day = dayByNumber.get(proposedDay.dayNumber) ?? days[index];
+        if (!day) throw new Error(`Unable to map proposed day ${proposedDay.dayNumber}`);
+
+        updateDay(day.id, day, { title: proposedDay.title || null });
+
+        for (const activity of proposedDay.activities) {
+          const place = createPlace(String(created.tripId), {
+            name: activity.name,
+            description: activity.notes || undefined,
+            address: activity.area || undefined,
+            price: activity.estimatedCost ?? undefined,
+            currency: proposal.currency || undefined,
+            place_time: activity.startTime || undefined,
+            duration_minutes: activity.durationMinutes ?? undefined,
+            notes: activity.category ? `AI category: ${activity.category}` : undefined,
+          });
+          createdPlaceIds.push(Number(place.id));
+          createAssignment(day.id, place.id, activity.notes);
+          activityCount += 1;
+        }
+      }
+
+      return {
+        tripId: created.tripId,
+        dayCount: proposal.days.length,
+        activityCount,
+      };
+    });
+
+    const result = apply();
+
+    // Journey synchronization is deliberately outside the DB transaction because
+    // it is a non-critical derived side effect. A failure must not roll back an
+    // otherwise valid user-approved trip.
+    for (const placeId of createdPlaceIds) {
+      try { onPlaceCreated(result.tripId, placeId); } catch { /* non-fatal */ }
+    }
+
+    return {
+      ...result,
+      trip: getTrip(result.tripId, userId),
+      mutationApplied: true,
+      requiresReview: false,
     };
   }
 }
