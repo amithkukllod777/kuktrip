@@ -51,10 +51,12 @@ export default function AiTripPlannerPage(): React.ReactElement {
   const [pace, setPace] = useState<Pace>('balanced')
   const [notes, setNotes] = useState('')
   const [loading, setLoading] = useState(false)
+  const [applying, setApplying] = useState(false)
   const [error, setError] = useState('')
+  const [applyError, setApplyError] = useState('')
   const [result, setResult] = useState<AiResponse | null>(null)
 
-  const canSubmit = destination.trim().length > 1 && !loading
+  const canSubmit = destination.trim().length > 1 && !loading && !applying
   const estimate = useMemo(() => {
     if (!result?.proposal.estimatedTotal) return null
     return new Intl.NumberFormat(undefined, { style: 'currency', currency: result.proposal.currency || currency, maximumFractionDigits: 0 }).format(result.proposal.estimatedTotal)
@@ -64,6 +66,7 @@ export default function AiTripPlannerPage(): React.ReactElement {
     if (!canSubmit) return
     setLoading(true)
     setError('')
+    setApplyError('')
     setResult(null)
     try {
       const response = await fetch('/api/ai/trip-plan', {
@@ -93,6 +96,28 @@ export default function AiTripPlannerPage(): React.ReactElement {
     }
   }
 
+  async function applyProposal() {
+    if (!result || applying) return
+    setApplying(true)
+    setApplyError('')
+    try {
+      const response = await fetch('/api/ai/trip-plan/apply', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ proposal: result.proposal }),
+      })
+      const body = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(body?.error || body?.message || 'KukTrip could not save this plan.')
+      if (!body?.tripId) throw new Error('KukTrip created the plan but returned no trip ID.')
+      navigate(`/trips/${body.tripId}`)
+    } catch (e) {
+      setApplyError(e instanceof Error ? e.message : 'KukTrip could not save this plan.')
+    } finally {
+      setApplying(false)
+    }
+  }
+
   return (
     <>
       <Navbar />
@@ -108,7 +133,7 @@ export default function AiTripPlannerPage(): React.ReactElement {
                 <div className="grid grid-cols-3 gap-3"><Field label="Days" icon={<CalendarDays size={15} />}><input inputMode="numeric" value={dayCount} onChange={e => setDayCount(e.target.value.replace(/\D/g, ''))} className="w-full rounded-xl border border-slate-200 px-3 py-2.5" /></Field><Field label="Adults" icon={<Users size={15} />}><input inputMode="numeric" value={adults} onChange={e => setAdults(e.target.value.replace(/\D/g, ''))} className="w-full rounded-xl border border-slate-200 px-3 py-2.5" /></Field><Field label="Children"><input inputMode="numeric" value={children} onChange={e => setChildren(e.target.value.replace(/\D/g, ''))} className="w-full rounded-xl border border-slate-200 px-3 py-2.5" /></Field></div>
                 <div className="grid grid-cols-[1fr_110px] gap-3"><Field label="Budget" icon={<Wallet size={15} />}><input inputMode="decimal" value={budget} onChange={e => setBudget(e.target.value.replace(/[^0-9.]/g, ''))} placeholder="150000" className="w-full rounded-xl border border-slate-200 px-3 py-2.5" /></Field><Field label="Currency"><input value={currency} onChange={e => setCurrency(e.target.value.toUpperCase().slice(0, 3))} className="w-full rounded-xl border border-slate-200 px-3 py-2.5" /></Field></div>
                 <Field label="Interests"><input value={interests} onChange={e => setInterests(e.target.value)} placeholder="food, beaches, temples" className="w-full rounded-xl border border-slate-200 px-3 py-2.5" /></Field>
-                <Field label="Pace"><div className="grid grid-cols-3 gap-2">{(['relaxed','balanced','packed'] as Pace[]).map(v => <button key={v} onClick={() => setPace(v)} className={`rounded-xl border px-2 py-2 text-sm capitalize ${pace === v ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-slate-200'}`}>{v}</button>)}</div></Field>
+                <Field label="Pace"><div className="grid grid-cols-3 gap-2">{(['relaxed','balanced','packed'] as Pace[]).map(v => <button key={v} type="button" onClick={() => setPace(v)} className={`rounded-xl border px-2 py-2 text-sm capitalize ${pace === v ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-slate-200'}`}>{v}</button>)}</div></Field>
                 <Field label="Anything else?"><textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3} placeholder="Kids-friendly, vegetarian food, avoid very early mornings…" className="w-full resize-none rounded-xl border border-slate-200 px-3 py-2.5" /></Field>
               </div>
               {error && <div className="mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</div>}
@@ -117,7 +142,7 @@ export default function AiTripPlannerPage(): React.ReactElement {
             <section className="min-h-[520px] rounded-3xl border border-slate-200 bg-white p-5 shadow-sm md:p-7">
               {!result && !loading && <div className="grid h-full min-h-[480px] place-items-center text-center"><div className="max-w-md"><Sparkles className="mx-auto mb-4 text-indigo-500" size={42} /><h2 className="text-2xl font-bold text-slate-900">Your itinerary will appear here</h2><p className="mt-2 text-slate-500">KukTrip AI returns a reviewable plan with day-by-day activities, estimates, assumptions and warnings.</p></div></div>}
               {loading && <div className="grid min-h-[480px] place-items-center"><div className="text-center"><div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-indigo-600" /><p className="mt-4 font-medium text-slate-600">Planning routes, pace and daily flow…</p></div></div>}
-              {result && <ProposalView result={result} estimate={estimate} />}
+              {result && <ProposalView result={result} estimate={estimate} applying={applying} applyError={applyError} onApply={applyProposal} />}
             </section>
           </div>
         </div>
@@ -128,12 +153,17 @@ export default function AiTripPlannerPage(): React.ReactElement {
 
 function Field({ label, icon, children }: { label: string; icon?: React.ReactNode; children: React.ReactNode }) { return <label className="block"><span className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">{icon}{label}</span>{children}</label> }
 
-function ProposalView({ result, estimate }: { result: AiResponse; estimate: string | null }) {
+function ProposalView({ result, estimate, applying, applyError, onApply }: { result: AiResponse; estimate: string | null; applying: boolean; applyError: string; onApply: () => void }) {
   const p = result.proposal
   return <div>
     <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-100 pb-5"><div><div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700"><CheckCircle2 size={13}/> Review-ready proposal</div><h2 className="text-2xl font-bold text-slate-950">{p.title}</h2><p className="mt-1 max-w-2xl text-slate-600">{p.summary}</p></div>{estimate && <div className="rounded-2xl bg-slate-50 px-4 py-3 text-right"><div className="text-xs text-slate-500">Estimated total</div><div className="text-lg font-bold text-slate-900">{estimate}</div></div>}</div>
     <div className="mt-5 space-y-4">{p.days.map(day => <article key={day.dayNumber} className="rounded-2xl border border-slate-200 p-4"><div className="mb-3 flex items-start justify-between gap-3"><div><div className="text-xs font-bold uppercase tracking-wider text-indigo-600">Day {day.dayNumber}{day.date ? ` • ${day.date}` : ''}</div><h3 className="mt-1 text-lg font-bold text-slate-900">{day.title}</h3></div>{day.estimatedCost != null && <span className="text-sm font-semibold text-slate-600">≈ {day.estimatedCost} {p.currency}</span>}</div><div className="space-y-2">{day.activities.map((a, i) => <div key={`${day.dayNumber}-${i}`} className="grid grid-cols-[54px_1fr] gap-3 rounded-xl bg-slate-50 p-3"><div className="text-sm font-semibold text-slate-500">{a.startTime || '—'}</div><div><div className="font-semibold text-slate-900">{a.name}</div><div className="mt-0.5 text-xs text-slate-500">{[a.category, a.area, a.durationMinutes ? `${a.durationMinutes} min` : null].filter(Boolean).join(' • ')}</div>{a.notes && <div className="mt-1 text-sm text-slate-600">{a.notes}</div>}</div></div>)}</div></article>)}</div>
     {(p.assumptions.length > 0 || p.warnings.length > 0) && <div className="mt-5 grid gap-3 md:grid-cols-2">{p.assumptions.length > 0 && <div className="rounded-2xl bg-blue-50 p-4"><div className="font-semibold text-blue-900">Assumptions</div><ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-blue-800">{p.assumptions.map((v,i)=><li key={i}>{v}</li>)}</ul></div>}{p.warnings.length > 0 && <div className="rounded-2xl bg-amber-50 p-4"><div className="flex items-center gap-2 font-semibold text-amber-900"><AlertTriangle size={16}/> Check before booking</div><ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-amber-800">{p.warnings.map((v,i)=><li key={i}>{v}</li>)}</ul></div>}</div>}
-    <div className="mt-5 rounded-2xl border border-dashed border-slate-300 p-4 text-sm text-slate-500">This proposal has <strong>not</strong> changed your trip yet. The next apply flow will let you review and create the trip safely through normal KukTrip APIs.</div>
+    <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <div className="font-semibold text-slate-900">Ready to save?</div>
+      <p className="mt-1 text-sm text-slate-600">KukTrip will atomically create the trip, days, saved places and itinerary assignments only after you approve this proposal.</p>
+      {applyError && <div className="mt-3 rounded-xl bg-red-50 p-3 text-sm text-red-700">{applyError}</div>}
+      <button type="button" onClick={onApply} disabled={applying} className="mt-4 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"><CheckCircle2 size={17}/>{applying ? 'Creating trip…' : 'Create this trip'}</button>
+    </div>
   </div>
 }
