@@ -5,9 +5,11 @@ import { JWT_SECRET } from '../config';
 import { AuthRequest, OptionalAuthRequest, User } from '../types';
 import { applyIdempotency } from './idempotency';
 import { isDemoEmail } from '../services/demo';
+import { resolveKuklabsBearerUser } from '../services/kuklabsBearer';
 
 export function extractToken(req: Request): string | null {
-  // Prefer httpOnly cookie; fall back to Authorization: Bearer (MCP, API clients)
+  // Prefer httpOnly cookie; fall back to Authorization: Bearer (MCP, API clients,
+  // and native Kuklabs AuthKit access tokens).
   const cookieToken = (req as any).cookies?.trek_session;
   if (cookieToken) return cookieToken;
   const authHeader = req.headers['authorization'];
@@ -15,40 +17,50 @@ export function extractToken(req: Request): string | null {
 }
 
 /**
- * Verify a JWT and load its user, enforcing the password_version gate.
+ * Verify a LOCAL KukTrip/TREK JWT and load its user, enforcing the
+ * password_version gate.
  *
- * Exported so every auth surface in the codebase (MCP bearer tokens,
- * file download query tokens, the photo-serving route) goes through the
- * same check. A password reset bumps `users.password_version`, which
- * invalidates every JWT that embedded the prior value — but only if
- * every verify path actually compares the claim. Previously several
- * paths called `jwt.verify` directly and skipped the DB lookup, so a
- * stolen token kept working after the victim reset.
+ * This function deliberately stays local-only because requireCookieAuth uses it
+ * for sensitive OAuth-management endpoints. A native AuthKit bearer must never
+ * become equivalent to the app's httpOnly cookie merely by being copied into a
+ * cookie header.
  */
 export function verifyJwtAndLoadUser(token: string): User | null {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] }) as { id: number; pv?: number; purpose?: string };
-    // Purpose-scoped tokens (e.g. the short-lived mfa_login token) share this
-    // secret but are not full session tokens — only their dedicated endpoint
-    // may accept them, so reject any token carrying a purpose claim here.
+    const decoded = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] }) as {
+      id: number;
+      pv?: number;
+      purpose?: string;
+    };
     if (decoded.purpose) return null;
-    const row = db.prepare(
-      'SELECT id, username, email, role, password_version FROM users WHERE id = ?'
-    ).get(decoded.id) as (User & { password_version?: number }) | undefined;
+    if (!Number.isFinite(decoded.id)) return null;
+    const row = db
+      .prepare('SELECT id, username, email, role, password_version FROM users WHERE id = ?')
+      .get(decoded.id) as (User & { password_version?: number }) | undefined;
     if (!row) return null;
-    // Session invalidation: any token whose embedded password_version
-    // predates the user's current one is rejected. Tokens issued before
-    // the `pv` claim existed (decoded.pv === undefined) are treated as
-    // version 0 so legacy sessions keep working until the user resets.
     const tokenPv = typeof decoded.pv === 'number' ? decoded.pv : 0;
     const currentPv = typeof row.password_version === 'number' ? row.password_version : 0;
     if (tokenPv !== currentPv) return null;
-    // Don't leak password_version beyond the middleware.
     const { password_version: _pv, ...user } = row;
     return user as User;
   } catch {
     return null;
   }
+}
+
+/**
+ * Product-API session verifier.
+ *
+ * Order matters:
+ * 1. existing local session/Bearer token (web/PWA, MCP, legacy clients), then
+ * 2. central Kuklabs AuthKit bearer issued specifically to `kuktrip`.
+ *
+ * During the shared-MySQL migration the central identity is mapped to the
+ * compatibility local row by openId. Once Issue #18 removes that compatibility
+ * layer, this function can resolve the shared Kuklabs user directly instead.
+ */
+export function verifyProductTokenAndLoadUser(token: string): User | null {
+  return verifyJwtAndLoadUser(token) || resolveKuklabsBearerUser(token);
 }
 
 const authenticate = (req: Request, res: Response, next: NextFunction): void => {
@@ -59,7 +71,7 @@ const authenticate = (req: Request, res: Response, next: NextFunction): void => 
     return;
   }
 
-  const user = verifyJwtAndLoadUser(token);
+  const user = verifyProductTokenAndLoadUser(token);
   if (!user) {
     res.status(401).json({ error: 'Invalid or expired token', code: 'AUTH_REQUIRED' });
     return;
@@ -69,8 +81,8 @@ const authenticate = (req: Request, res: Response, next: NextFunction): void => 
 };
 
 /** Like `authenticate` but rejects requests that don't carry an httpOnly session cookie.
- *  Used on state-mutating OAuth endpoints (consent POST, client CRUD, session revoke)
- *  to prevent Bearer JWT tokens obtained by other means from managing OAuth clients. */
+ * Used on state-mutating OAuth endpoints (consent POST, client CRUD, session revoke)
+ * to prevent Bearer JWT tokens obtained by other means from managing OAuth clients. */
 const requireCookieAuth = (req: Request, res: Response, next: NextFunction): void => {
   const cookieToken = (req as any).cookies?.trek_session;
   if (!cookieToken) {
@@ -94,7 +106,7 @@ const optionalAuth = (req: Request, res: Response, next: NextFunction): void => 
     return next();
   }
 
-  (req as OptionalAuthRequest).user = verifyJwtAndLoadUser(token) || null;
+  (req as OptionalAuthRequest).user = verifyProductTokenAndLoadUser(token) || null;
   next();
 };
 
