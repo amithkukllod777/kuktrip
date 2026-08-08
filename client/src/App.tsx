@@ -11,6 +11,7 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
 import DashboardPage from './pages/DashboardPage'
 import AiTripPlannerPage from './pages/AiTripPlannerPage'
+import ExplorePage from './pages/ExplorePage'
 import TripPlannerPage from './pages/TripPlannerPage'
 import FilesPage from './pages/FilesPage'
 import AdminPage from './pages/AdminPage'
@@ -218,142 +219,24 @@ export default function App() {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/oauth/consent" element={<OAuthAuthorizePage />} />
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <DashboardPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/ai-plan"
-          element={
-            <ProtectedRoute>
-              <AiTripPlannerPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/join/:token"
-          element={
-            <ProtectedRoute>
-              <JoinTripPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/help"
-          element={
-            <ProtectedRoute>
-              <HelpPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/help/:slug"
-          element={
-            <ProtectedRoute>
-              <HelpPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/trips/:id"
-          element={
-            <ProtectedRoute>
-              <TripPlannerPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/trips/:id/files"
-          element={
-            <ProtectedRoute>
-              <FilesPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute adminRequired>
-              <AdminPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/settings"
-          element={
-            <ProtectedRoute>
-              <SettingsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/plugins/:pluginId"
-          element={
-            <ProtectedRoute>
-              <PluginPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/vacay"
-          element={
-            <ProtectedRoute>
-              <VacayPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/atlas"
-          element={
-            <ProtectedRoute>
-              <AtlasPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/journey"
-          element={
-            <ProtectedRoute addonId="journey">
-              <JourneyPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/journey/:id"
-          element={
-            <ProtectedRoute addonId="journey">
-              <JourneyDetailPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/collections"
-          element={
-            <ProtectedRoute addonId="collections">
-              <CollectionsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/collections/:id"
-          element={
-            <ProtectedRoute addonId="collections">
-              <CollectionsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/notifications"
-          element={
-            <ProtectedRoute>
-              <InAppNotificationsPage />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+        <Route path="/ai-plan" element={<ProtectedRoute><AiTripPlannerPage /></ProtectedRoute>} />
+        <Route path="/explore" element={<ProtectedRoute><ExplorePage /></ProtectedRoute>} />
+        <Route path="/join/:token" element={<ProtectedRoute><JoinTripPage /></ProtectedRoute>} />
+        <Route path="/help" element={<ProtectedRoute><HelpPage /></ProtectedRoute>} />
+        <Route path="/help/:slug" element={<ProtectedRoute><HelpPage /></ProtectedRoute>} />
+        <Route path="/trips/:id" element={<ProtectedRoute><TripPlannerPage /></ProtectedRoute>} />
+        <Route path="/trips/:id/files" element={<ProtectedRoute><FilesPage /></ProtectedRoute>} />
+        <Route path="/admin" element={<ProtectedRoute adminRequired><AdminPage /></ProtectedRoute>} />
+        <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+        <Route path="/plugins/:pluginId" element={<ProtectedRoute><PluginPage /></ProtectedRoute>} />
+        <Route path="/vacay" element={<ProtectedRoute><VacayPage /></ProtectedRoute>} />
+        <Route path="/atlas" element={<ProtectedRoute><AtlasPage /></ProtectedRoute>} />
+        <Route path="/journey" element={<ProtectedRoute addonId="journey"><JourneyPage /></ProtectedRoute>} />
+        <Route path="/journey/:id" element={<ProtectedRoute addonId="journey"><JourneyDetailPage /></ProtectedRoute>} />
+        <Route path="/collections" element={<ProtectedRoute addonId="collections"><CollectionsPage /></ProtectedRoute>} />
+        <Route path="/collections/:id" element={<ProtectedRoute addonId="collections"><CollectionsPage /></ProtectedRoute>} />
+        <Route path="/notifications" element={<ProtectedRoute><InAppNotificationsPage /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </TranslationProvider>
