@@ -112,10 +112,52 @@ private struct TripDetailView: View {
                 }
                 Button("Add itinerary day", systemImage: "plus") { Task { await store.addDay() } }
             }
+
+            Section("Places") {
+                if store.places.isEmpty {
+                    Text("No saved places yet.").foregroundStyle(.secondary)
+                }
+                ForEach(store.places) { place in
+                    VStack(alignment: .leading, spacing: 5) {
+                        Label(place.name, systemImage: "mappin.and.ellipse").font(.headline)
+                        if let address = place.address, !address.isEmpty { Text(address).font(.subheadline).foregroundStyle(.secondary) }
+                        if let price = place.price { Text("Estimated: \(price.formatted()) \(place.currency ?? trip.currency)").font(.caption).foregroundStyle(.secondary) }
+                    }.padding(.vertical, 3)
+                }
+            }
+
+            Section("Bookings") {
+                if store.reservations.isEmpty {
+                    Text("No reservations yet.").foregroundStyle(.secondary)
+                }
+                ForEach(store.reservations) { reservation in
+                    VStack(alignment: .leading, spacing: 5) {
+                        HStack {
+                            Label(reservation.title, systemImage: bookingIcon(reservation.type)).font(.headline)
+                            Spacer()
+                            Text(reservation.status.capitalized).font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+                        }
+                        if let time = reservation.reservationTime { Text(time).font(.subheadline).foregroundStyle(.secondary) }
+                        if let location = reservation.location, !location.isEmpty { Text(location).font(.subheadline) }
+                        if let confirmation = reservation.confirmationNumber, !confirmation.isEmpty { Text("Confirmation: \(confirmation)").font(.caption).foregroundStyle(.secondary) }
+                    }.padding(.vertical, 3)
+                }
+            }
         }
         .navigationTitle(trip.title)
         .navigationBarTitleDisplayMode(.inline)
         .task { await store.openTrip(trip) }
+    }
+
+    private func bookingIcon(_ type: String) -> String {
+        switch type.lowercased() {
+        case "flight": return "airplane"
+        case "hotel", "accommodation": return "bed.double"
+        case "train": return "train.side.front.car"
+        case "car", "rental": return "car"
+        case "restaurant": return "fork.knife"
+        default: return "ticket"
+        }
     }
 }
 
@@ -131,12 +173,9 @@ private struct CreateTripView: View {
         Form {
             Section("Trip") {
                 TextField("Trip name", text: $title)
-                TextField("Start date (YYYY-MM-DD)", text: $startDate)
-                    .textInputAutocapitalization(.never)
-                TextField("End date (YYYY-MM-DD)", text: $endDate)
-                    .textInputAutocapitalization(.never)
-                TextField("Days", text: $dayCount)
-                    .keyboardType(.numberPad)
+                TextField("Start date (YYYY-MM-DD)", text: $startDate).textInputAutocapitalization(.never)
+                TextField("End date (YYYY-MM-DD)", text: $endDate).textInputAutocapitalization(.never)
+                TextField("Days", text: $dayCount).keyboardType(.numberPad)
             }
             Section {
                 Button {
