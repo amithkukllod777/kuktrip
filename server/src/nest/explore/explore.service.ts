@@ -53,11 +53,13 @@ export class ExploreService {
     const db = await getSharedMysqlPool();
     const limit = Math.min(Math.max(Number(query.limit) || 50, 1), 100);
     const where = ["a.kac_status = 'active'", "a.kac_moderationStatus = 'clear'", "a.kac_visibility = 'public'"];
-    const params: unknown[] = [];
+    // Bind in literal SQL placeholder order: SELECT myStatus first, then dynamic
+    // WHERE filters, block checks, and finally LIMIT.
+    const params: unknown[] = [me.id];
     if (query.destination?.trim()) { where.push('LOWER(a.kac_destination) = LOWER(?)'); params.push(query.destination.trim()); }
     if (query.from) { where.push('a.kac_startAt >= ?'); params.push(query.from); }
     if (query.to) { where.push('a.kac_startAt <= ?'); params.push(query.to); }
-    params.push(me.id, me.id, me.id, limit);
+    params.push(me.id, me.id, limit);
 
     const [rows] = await db.execute<RowDataPacket[]>(
       `SELECT a.kac_id AS id, a.kac_hostUserId AS hostUserId, a.kac_title AS title,
