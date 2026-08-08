@@ -15,10 +15,6 @@ const ADDON_NAV: Record<string, { icon: LucideIcon; labelKey: string }> = {
 
 interface NavItem { to: string; label: string; icon: LucideIcon }
 
-// The centre "+" means something different per context: inside a trip it adds a
-// place, on the journey list it starts a journey, inside a journey it adds an
-// entry — everywhere else it creates a new trip. Pages pick the intent up from
-// the ?create= query param.
 function useCreateAction(): { label: string; run: () => void } {
   const navigate = useNavigate()
   const { t } = useTranslation()
@@ -27,9 +23,6 @@ function useCreateAction(): { label: string; run: () => void } {
   const onJourneyList = useMatch('/journey')
 
   if (inTrip) {
-    // The "+" is context-aware per active tab: Bookings → reservation,
-    // Transports → transport, Costs → expense. Tabs without a create modal
-    // (lists / files / collab) fall through to adding a place. #1349
     const id = inTrip.params.id
     const tripTab = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem(`trip-tab-${id}`) : null
     if (tripTab === 'finanzplan') return { label: t('costs.addExpense'), run: () => navigate(`/trips/${id}?create=expense`) }
@@ -37,12 +30,8 @@ function useCreateAction(): { label: string; run: () => void } {
     if (tripTab === 'transports') return { label: t('transport.addManual'), run: () => navigate(`/trips/${id}?create=transport`) }
     return { label: t('places.addPlace'), run: () => navigate(`/trips/${id}?create=place`) }
   }
-  if (inJourney) {
-    return { label: t('journey.detail.addEntry'), run: () => navigate(`/journey/${inJourney.params.id}?create=entry`) }
-  }
-  if (onJourneyList) {
-    return { label: t('journey.new'), run: () => navigate('/journey?create=1') }
-  }
+  if (inJourney) return { label: t('journey.detail.addEntry'), run: () => navigate(`/journey/${inJourney.params.id}?create=entry`) }
+  if (onJourneyList) return { label: t('journey.new'), run: () => navigate('/journey?create=1') }
   return { label: t('dashboard.newTrip'), run: () => navigate('/dashboard?create=1') }
 }
 
@@ -53,21 +42,20 @@ export default function BottomNav() {
   const dark = darkMode === true || darkMode === 'dark' || (darkMode === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches)
   const addons = useAddonStore(s => s.addons)
   const globalAddons = addons.filter(a => a.type === 'global' && a.enabled)
-  // Page plugins are reachable from the mobile tab bar too, mirroring the desktop
-  // nav pill (Navbar) — otherwise they were only reachable by typing /plugins/:id.
   const pagePlugins = usePluginStore(s => s.plugins).filter(p => p.type === 'page')
   const location = useLocation()
   const create = useCreateAction()
 
   const items: NavItem[] = [
     { to: '/dashboard', label: t('nav.myTrips'), icon: LayoutGrid },
+    { to: '/explore', label: 'Explore', icon: Compass },
     ...globalAddons.flatMap(addon => {
       const nav = ADDON_NAV[addon.id]
       return nav ? [{ to: `/${addon.id}`, label: t(nav.labelKey), icon: nav.icon }] : []
     }),
     ...pagePlugins.map(p => ({ to: `/plugins/${p.id}`, label: p.name, icon: Blocks })),
   ]
-  // Split the items so the raised "+" sits dead centre.
+
   const splitAt = Math.ceil(items.length / 2)
   const left = items.slice(0, splitAt)
   const right = items.slice(splitAt)
@@ -108,7 +96,6 @@ export default function BottomNav() {
       }}
     >
       <div className="flex flex-1 items-center justify-around min-w-0">{left.map(renderItem)}</div>
-
       <button
         onClick={create.run}
         aria-label={create.label}
@@ -123,7 +110,6 @@ export default function BottomNav() {
       >
         <Plus size={24} strokeWidth={2.6} />
       </button>
-
       <div className="flex flex-1 items-center justify-around min-w-0">{right.map(renderItem)}</div>
     </nav>
   )
