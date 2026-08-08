@@ -1,0 +1,38 @@
+name: iOS build (KukTrip)
+
+on:
+  pull_request:
+    paths:
+      - "ios-app/**"
+      - ".github/workflows/ios-build.yml"
+  push:
+    branches: [ main ]
+    paths:
+      - "ios-app/**"
+      - ".github/workflows/ios-build.yml"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        working-directory: ios-app
+        run: xcodegen generate
+
+      - name: Build for iOS Simulator
+        working-directory: ios-app
+        run: |
+          xcodebuild \
+            -project KukTrip.xcodeproj \
+            -scheme KukTrip \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            build
