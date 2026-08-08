@@ -116,6 +116,12 @@ private struct TripDetailView: View {
             Section("Places") {
                 if store.places.isEmpty {
                     Text("No saved places yet.").foregroundStyle(.secondary)
+                } else if store.places.contains(where: { $0.lat != nil && $0.lng != nil }) {
+                    NavigationLink {
+                        TripPlacesMapView(places: store.places)
+                    } label: {
+                        Label("Open trip map", systemImage: "map.fill")
+                    }
                 }
                 ForEach(store.places) { place in
                     VStack(alignment: .leading, spacing: 5) {
