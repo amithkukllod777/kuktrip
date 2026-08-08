@@ -63,6 +63,7 @@ import com.kuklabs.kuktrip.data.trips.Day
 import com.kuklabs.kuktrip.data.trips.Place
 import com.kuklabs.kuktrip.data.trips.Reservation
 import com.kuklabs.kuktrip.data.trips.Trip
+import com.kuklabs.kuktrip.ui.maps.TripMapScreen
 import com.kuklabs.kuktrip.ui.trips.TripsViewModel
 
 private data class MainDestination(val route: String, val label: String, val icon: ImageVector)
@@ -127,7 +128,11 @@ fun KukTripApp(onLogout: () -> Unit) {
                     onOpen = { id -> tripsVm.openTrip(id); navController.navigate("trip/$id") },
                 )
             }
-            composable("trip/{id}") { TripDetailScreen(tripsVm) }
+            composable("trip/{id}") { TripDetailScreen(tripsVm, onOpenMap = { navController.navigate("trip-map") }) }
+            composable("trip-map") {
+                val state by tripsVm.state.collectAsState()
+                TripMapScreen(state.places)
+            }
             composable("explore") { ExploreScreen() }
             composable("profile") { ProfileScreen(onLogout) }
             composable("create") {
@@ -198,7 +203,7 @@ private fun TripCard(trip: Trip, onClick: () -> Unit) {
 }
 
 @Composable
-private fun TripDetailScreen(vm: TripsViewModel) {
+private fun TripDetailScreen(vm: TripsViewModel, onOpenMap: () -> Unit) {
     val s by vm.state.collectAsState()
     val trip = s.selectedTrip
     if (trip == null) {
@@ -221,7 +226,17 @@ private fun TripDetailScreen(vm: TripsViewModel) {
         if (s.days.isEmpty()) item { Text("No itinerary days yet.", color = MaterialTheme.colorScheme.onSurfaceVariant) }
         items(s.days, key = { "day-${it.id}" }) { day -> DayCard(day) }
 
-        item { SectionTitle("Places", "${s.places.size} saved") }
+        item {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Column {
+                    Text("Places", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Text("${s.places.size} saved", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                if (s.places.any { it.lat != null && it.lng != null }) {
+                    TextButton(onClick = onOpenMap) { Text("Map") }
+                }
+            }
+        }
         if (s.places.isEmpty()) item { Text("No saved places yet.", color = MaterialTheme.colorScheme.onSurfaceVariant) }
         items(s.places, key = { "place-${it.id}" }) { place -> PlaceCard(place, trip.currency) }
 
