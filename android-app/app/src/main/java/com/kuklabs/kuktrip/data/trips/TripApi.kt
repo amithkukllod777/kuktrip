@@ -11,51 +11,32 @@ import retrofit2.http.Query
 
 interface TripApi {
     @GET("api/trips")
-    suspend fun listTrips(
-        @Header("Authorization") authorization: String,
-        @Query("archived") archived: Int = 0,
-    ): Response<TripsEnvelope>
+    suspend fun listTrips(@Header("Authorization") authorization: String, @Query("archived") archived: Int = 0): Response<TripsEnvelope>
 
     @GET("api/trips/{id}")
-    suspend fun getTrip(
-        @Header("Authorization") authorization: String,
-        @Path("id") id: Int,
-    ): Response<TripEnvelope>
+    suspend fun getTrip(@Header("Authorization") authorization: String, @Path("id") id: Int): Response<TripEnvelope>
 
     @POST("api/trips")
-    suspend fun createTrip(
-        @Header("Authorization") authorization: String,
-        @Body body: CreateTripBody,
-    ): Response<TripEnvelope>
+    suspend fun createTrip(@Header("Authorization") authorization: String, @Body body: CreateTripBody): Response<TripEnvelope>
 
     @DELETE("api/trips/{id}")
-    suspend fun deleteTrip(
-        @Header("Authorization") authorization: String,
-        @Path("id") id: Int,
-    ): Response<Map<String, Any>>
+    suspend fun deleteTrip(@Header("Authorization") authorization: String, @Path("id") id: Int): Response<Map<String, Any>>
 
     @GET("api/trips/{tripId}/days")
-    suspend fun listDays(
-        @Header("Authorization") authorization: String,
-        @Path("tripId") tripId: Int,
-    ): Response<List<Day>>
+    suspend fun listDays(@Header("Authorization") authorization: String, @Path("tripId") tripId: Int): Response<List<Day>>
 
     @POST("api/trips/{tripId}/days")
-    suspend fun createDay(
-        @Header("Authorization") authorization: String,
-        @Path("tripId") tripId: Int,
-        @Body body: CreateDayBody = CreateDayBody(),
-    ): Response<DayEnvelope>
+    suspend fun createDay(@Header("Authorization") authorization: String, @Path("tripId") tripId: Int, @Body body: CreateDayBody = CreateDayBody()): Response<DayEnvelope>
 
     @GET("api/trips/{tripId}/places")
-    suspend fun listPlaces(
-        @Header("Authorization") authorization: String,
-        @Path("tripId") tripId: Int,
-    ): Response<PlacesEnvelope>
+    suspend fun listPlaces(@Header("Authorization") authorization: String, @Path("tripId") tripId: Int): Response<PlacesEnvelope>
 
     @GET("api/trips/{tripId}/reservations")
-    suspend fun listReservations(
-        @Header("Authorization") authorization: String,
-        @Path("tripId") tripId: Int,
-    ): Response<ReservationsEnvelope>
+    suspend fun listReservations(@Header("Authorization") authorization: String, @Path("tripId") tripId: Int): Response<ReservationsEnvelope>
+
+    @GET("api/trips/{tripId}/budget")
+    suspend fun listBudget(@Header("Authorization") authorization: String, @Path("tripId") tripId: Int): Response<BudgetEnvelope>
+
+    @POST("api/trips/{tripId}/budget")
+    suspend fun createBudgetItem(@Header("Authorization") authorization: String, @Path("tripId") tripId: Int, @Body body: CreateBudgetItemBody): Response<BudgetItemEnvelope>
 }
