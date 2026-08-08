@@ -14,14 +14,22 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0.0"
-        // Base URL of the Kuk Trip server. Override per flavor/build as needed.
+
+        // KukTrip product API. The authoritative production source remains
+        // trip.kuklabs.com; local persistence is only an offline/cache concern.
         buildConfigField("String", "API_BASE_URL", "\"https://trip.kuklabs.com/\"")
+
+        // One Kuklabs Account — canonical native/separate-repo AuthKit REST
+        // contract from kukbook-erp/KUKLABS_IDENTITY.md.
+        buildConfigField("String", "AUTHKIT_BASE_URL", "\"https://www.kuklabs.com/v1/auth/\"")
+        buildConfigField("String", "KUKLABS_PRODUCT_ID", "\"kuktrip\"")
     }
 
     buildTypes {
         debug {
-            // Point debug builds at your dev server if different from prod.
             buildConfigField("String", "API_BASE_URL", "\"https://trip.kuklabs.com/\"")
+            buildConfigField("String", "AUTHKIT_BASE_URL", "\"https://www.kuklabs.com/v1/auth/\"")
+            buildConfigField("String", "KUKLABS_PRODUCT_ID", "\"kuktrip\"")
         }
         release {
             isMinifyEnabled = false
@@ -65,7 +73,6 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-extended")
 
-    // Networking to the Kuk Trip REST API
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
