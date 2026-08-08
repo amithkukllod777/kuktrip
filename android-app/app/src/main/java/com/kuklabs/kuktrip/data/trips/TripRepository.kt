@@ -52,6 +52,18 @@ class TripRepository(context: Context) {
         response.body().orEmpty()
     }
 
+    suspend fun listPlaces(tripId: Int): List<Place> = withContext(Dispatchers.IO) {
+        val response = api.listPlaces(bearer(), tripId)
+        if (!response.isSuccessful) throw TripDataException("Could not load places (${response.code()}).")
+        response.body()?.places.orEmpty()
+    }
+
+    suspend fun listReservations(tripId: Int): List<Reservation> = withContext(Dispatchers.IO) {
+        val response = api.listReservations(bearer(), tripId)
+        if (!response.isSuccessful) throw TripDataException("Could not load bookings (${response.code()}).")
+        response.body()?.reservations.orEmpty()
+    }
+
     suspend fun addDay(tripId: Int): Day = withContext(Dispatchers.IO) {
         val response = api.createDay(bearer(), tripId)
         if (!response.isSuccessful) throw TripDataException("Could not add itinerary day (${response.code()}).")
