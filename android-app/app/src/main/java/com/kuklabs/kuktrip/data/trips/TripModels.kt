@@ -52,3 +52,54 @@ data class DayNote(
 
 data class DayEnvelope(val day: Day)
 data class CreateDayBody(val date: String? = null, val notes: String? = null, val position: Int? = null)
+
+data class PlaceCategory(val id: Int, val name: String? = null, val color: String? = null, val icon: String? = null)
+
+data class Place(
+    val id: Int,
+    @SerializedName("trip_id") val tripId: Int,
+    val name: String,
+    val description: String? = null,
+    val lat: Double? = null,
+    val lng: Double? = null,
+    val address: String? = null,
+    val price: Double? = null,
+    val currency: String? = null,
+    @SerializedName("image_url") val imageUrl: String? = null,
+    @SerializedName("place_time") val placeTime: String? = null,
+    @SerializedName("end_time") val endTime: String? = null,
+    @SerializedName("duration_minutes") val durationMinutes: Int? = null,
+    val website: String? = null,
+    val phone: String? = null,
+    val category: PlaceCategory? = null,
+)
+
+data class PlacesEnvelope(val places: List<Place> = emptyList())
+data class PlaceEnvelope(val place: Place)
+data class CreatePlaceBody(val name: String, val address: String? = null, val lat: Double? = null, val lng: Double? = null, val notes: String? = null)
+
+data class Reservation(
+    val id: Int,
+    @SerializedName("trip_id") val tripId: Int,
+    val title: String,
+    val type: String = "other",
+    val status: String = "confirmed",
+    @SerializedName("reservation_time") val reservationTime: String? = null,
+    @SerializedName("reservation_end_time") val reservationEndTime: String? = null,
+    val location: String? = null,
+    @SerializedName("confirmation_number") val confirmationNumber: String? = null,
+    val notes: String? = null,
+    val url: String? = null,
+    @SerializedName("place_name") val placeName: String? = null,
+)
+
+data class ReservationsEnvelope(val reservations: List<Reservation> = emptyList())
+data class ReservationEnvelope(val reservation: Reservation)
+data class CreateReservationBody(
+    val title: String,
+    val type: String = "other",
+    @SerializedName("reservation_time") val reservationTime: String? = null,
+    val location: String? = null,
+    @SerializedName("confirmation_number") val confirmationNumber: String? = null,
+    val notes: String? = null,
+)
