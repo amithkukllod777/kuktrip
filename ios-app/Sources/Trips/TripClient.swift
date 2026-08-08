@@ -7,15 +7,15 @@ actor TripClient {
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
 
-    func listTrips() async throws -> [Trip] { try decoder.decode(TripsEnvelope.self, from: request(path: "api/trips", method: "GET", body: Optional<String>.none)).trips }
-    func getTrip(id: Int) async throws -> Trip { try decoder.decode(TripEnvelope.self, from: request(path: "api/trips/\(id)", method: "GET", body: Optional<String>.none)).trip }
-    func createTrip(_ input: CreateTripRequest) async throws -> Trip { try decoder.decode(TripEnvelope.self, from: request(path: "api/trips", method: "POST", body: input)).trip }
-    func listDays(tripId: Int) async throws -> [TripDay] { try decoder.decode([TripDay].self, from: request(path: "api/trips/\(tripId)/days", method: "GET", body: Optional<String>.none)) }
-    func listPlaces(tripId: Int) async throws -> [TripPlace] { try decoder.decode(PlacesEnvelope.self, from: request(path: "api/trips/\(tripId)/places", method: "GET", body: Optional<String>.none)).places }
-    func listReservations(tripId: Int) async throws -> [TripReservation] { try decoder.decode(ReservationsEnvelope.self, from: request(path: "api/trips/\(tripId)/reservations", method: "GET", body: Optional<String>.none)).reservations }
-    func listBudget(tripId: Int) async throws -> [TripBudgetItem] { try decoder.decode(BudgetEnvelope.self, from: request(path: "api/trips/\(tripId)/budget", method: "GET", body: Optional<String>.none)).items }
-    func createBudgetItem(tripId: Int, input: CreateBudgetItemRequest) async throws -> TripBudgetItem { try decoder.decode(BudgetItemEnvelope.self, from: request(path: "api/trips/\(tripId)/budget", method: "POST", body: input)).item }
-    func addDay(tripId: Int) async throws -> TripDay { try decoder.decode(DayEnvelope.self, from: request(path: "api/trips/\(tripId)/days", method: "POST", body: CreateDayRequest())).day }
+    func listTrips() async throws -> [Trip] { let data = try await request(path: "api/trips", method: "GET", body: Optional<String>.none); return try decoder.decode(TripsEnvelope.self, from: data).trips }
+    func getTrip(id: Int) async throws -> Trip { let data = try await request(path: "api/trips/\(id)", method: "GET", body: Optional<String>.none); return try decoder.decode(TripEnvelope.self, from: data).trip }
+    func createTrip(_ input: CreateTripRequest) async throws -> Trip { let data = try await request(path: "api/trips", method: "POST", body: input); return try decoder.decode(TripEnvelope.self, from: data).trip }
+    func listDays(tripId: Int) async throws -> [TripDay] { let data = try await request(path: "api/trips/\(tripId)/days", method: "GET", body: Optional<String>.none); return try decoder.decode([TripDay].self, from: data) }
+    func listPlaces(tripId: Int) async throws -> [TripPlace] { let data = try await request(path: "api/trips/\(tripId)/places", method: "GET", body: Optional<String>.none); return try decoder.decode(PlacesEnvelope.self, from: data).places }
+    func listReservations(tripId: Int) async throws -> [TripReservation] { let data = try await request(path: "api/trips/\(tripId)/reservations", method: "GET", body: Optional<String>.none); return try decoder.decode(ReservationsEnvelope.self, from: data).reservations }
+    func listBudget(tripId: Int) async throws -> [TripBudgetItem] { let data = try await request(path: "api/trips/\(tripId)/budget", method: "GET", body: Optional<String>.none); return try decoder.decode(BudgetEnvelope.self, from: data).items }
+    func createBudgetItem(tripId: Int, input: CreateBudgetItemRequest) async throws -> TripBudgetItem { let data = try await request(path: "api/trips/\(tripId)/budget", method: "POST", body: input); return try decoder.decode(BudgetItemEnvelope.self, from: data).item }
+    func addDay(tripId: Int) async throws -> TripDay { let data = try await request(path: "api/trips/\(tripId)/days", method: "POST", body: CreateDayRequest()); return try decoder.decode(DayEnvelope.self, from: data).day }
 
     private func request<Body: Encodable>(path: String, method: String, body: Body?) async throws -> Data {
         guard let token = await auth.validAccessToken() else { throw TripClientError.signedOut }
