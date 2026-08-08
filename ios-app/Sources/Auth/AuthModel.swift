@@ -4,7 +4,7 @@ import Observation
 @MainActor
 @Observable
 final class AuthModel {
-    enum Mode { case login, signup, otp }
+    enum Mode: Hashable, Sendable { case login, signup, otp }
 
     var mode: Mode = .login
     var fullName = ""
