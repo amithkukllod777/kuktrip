@@ -15,12 +15,7 @@ android {
         versionCode = 1
         versionName = "1.0.0"
 
-        // KukTrip product API. The authoritative production source remains
-        // trip.kuklabs.com; local persistence is only an offline/cache concern.
         buildConfigField("String", "API_BASE_URL", "\"https://trip.kuklabs.com/\"")
-
-        // One Kuklabs Account — canonical native/separate-repo AuthKit REST
-        // contract from kukbook-erp/KUKLABS_IDENTITY.md.
         buildConfigField("String", "AUTHKIT_BASE_URL", "\"https://www.kuklabs.com/v1/auth/\"")
         buildConfigField("String", "KUKLABS_PRODUCT_ID", "\"kuktrip\"")
     }
@@ -49,12 +44,8 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "17"
-    }
-    packaging {
-        resources { excludes += "/META-INF/{AL2.0,LGPL2.1}" }
-    }
+    kotlinOptions { jvmTarget = "17" }
+    packaging { resources { excludes += "/META-INF/{AL2.0,LGPL2.1}" } }
 }
 
 dependencies {
@@ -76,6 +67,8 @@ dependencies {
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+
+    implementation("org.maplibre.compose:maplibre-compose:0.14.0")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
 }
