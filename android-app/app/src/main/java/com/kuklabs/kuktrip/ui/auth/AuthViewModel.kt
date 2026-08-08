@@ -1,90 +1,117 @@
 package com.kuklabs.kuktrip.ui.auth
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.kuklabs.kuktrip.data.api.ApiClient
-import com.kuklabs.kuktrip.data.model.AppConfig
-import com.kuklabs.kuktrip.data.model.LoginRequest
-import com.kuklabs.kuktrip.data.model.RegisterRequest
+import com.kuklabs.kuktrip.data.auth.AuthRepository
+import com.kuklabs.kuktrip.data.auth.AuthResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-enum class AuthMode { LOGIN, REGISTER }
+enum class AuthMode { LOGIN, SIGNUP, OTP }
 
 data class AuthUiState(
     val mode: AuthMode = AuthMode.LOGIN,
     val fullName: String = "",
-    val email: String = "",
+    val identifier: String = "",
     val password: String = "",
-    val rememberMe: Boolean = false,
+    val otpCode: String = "",
+    val otpIdentifier: String = "",
     val showPassword: Boolean = false,
     val loading: Boolean = false,
+    val authKitReachable: Boolean? = null,
     val error: String? = null,
-    val config: AppConfig? = null,
     val success: Boolean = false,
 )
 
-class AuthViewModel : ViewModel() {
-
+class AuthViewModel(application: Application) : AndroidViewModel(application) {
+    private val repository = AuthRepository(application)
     private val _state = MutableStateFlow(AuthUiState())
     val state: StateFlow<AuthUiState> = _state.asStateFlow()
 
-    // Friendly-error policy (KUKLABS_UI_AUTH_AGENT_PACK): never surface raw errors.
-    private val genericSignInError =
-        "We couldn't sign you in. Check your email and password, then try again."
-
-    init { loadConfig() }
-
-    private fun loadConfig() {
+    init {
         viewModelScope.launch {
-            try {
-                val cfg = ApiClient.api.getAppConfig()
-                _state.value = _state.value.copy(
-                    config = cfg,
-                    mode = if (!cfg.hasUsers) AuthMode.REGISTER else _state.value.mode,
-                )
-            } catch (_: Exception) {
-                // Offline / no server reachable — keep sensible defaults.
-            }
+            _state.value = _state.value.copy(authKitReachable = repository.status())
         }
     }
 
-    fun setMode(m: AuthMode) { _state.value = _state.value.copy(mode = m, error = null) }
-    fun onFullName(v: String) { _state.value = _state.value.copy(fullName = v) }
-    fun onEmail(v: String) { _state.value = _state.value.copy(email = v) }
-    fun onPassword(v: String) { _state.value = _state.value.copy(password = v) }
-    fun toggleRemember() { _state.value = _state.value.copy(rememberMe = !_state.value.rememberMe) }
+    fun setMode(mode: AuthMode) {
+        _state.value = _state.value.copy(mode = mode, error = null)
+    }
+
+    fun onFullName(value: String) { _state.value = _state.value.copy(fullName = value) }
+    fun onIdentifier(value: String) { _state.value = _state.value.copy(identifier = value) }
+    fun onPassword(value: String) { _state.value = _state.value.copy(password = value) }
+    fun onOtpCode(value: String) {
+        _state.value = _state.value.copy(otpCode = value.filter(Char::isDigit).take(6))
+    }
     fun toggleShowPassword() { _state.value = _state.value.copy(showPassword = !_state.value.showPassword) }
     fun consumeSuccess() { _state.value = _state.value.copy(success = false) }
 
     fun submit() {
-        val s = _state.value
-        if (s.email.isBlank() || s.password.isBlank()) {
-            _state.value = s.copy(error = "Enter your email and password.")
-            return
+        when (_state.value.mode) {
+            AuthMode.LOGIN -> submitLogin()
+            AuthMode.SIGNUP -> submitSignup()
+            AuthMode.OTP -> submitOtp()
         }
-        if (s.mode == AuthMode.REGISTER && s.password.length < 8) {
-            _state.value = s.copy(error = "Use at least 8 characters.")
-            return
-        }
-        _state.value = s.copy(loading = true, error = null)
+    }
+
+    fun resendOtp() {
+        val identifier = _state.value.otpIdentifier
+        if (identifier.isBlank()) return
         viewModelScope.launch {
-            try {
-                val res = if (s.mode == AuthMode.LOGIN) {
-                    ApiClient.api.login(LoginRequest(s.email.trim(), s.password, s.rememberMe))
-                } else {
-                    val name = s.fullName.ifBlank { s.email.substringBefore("@") }
-                    ApiClient.api.register(RegisterRequest(name, s.email.trim(), s.password))
+            val ok = repository.requestOtp(identifier)
+            if (!ok) _state.value = _state.value.copy(error = "Could not send a new code. Try again.")
+        }
+    }
+
+    private fun submitLogin() {
+        val s = _state.value
+        if (s.identifier.isBlank() || s.password.isBlank()) {
+            _state.value = s.copy(error = "Enter your email/mobile and password.")
+            return
+        }
+        runAuth { repository.login(s.identifier, s.password) }
+    }
+
+    private fun submitSignup() {
+        val s = _state.value
+        if (s.fullName.isBlank() || s.identifier.isBlank() || s.password.length < 8) {
+            _state.value = s.copy(error = "Enter your name, email/mobile and a password of at least 8 characters.")
+            return
+        }
+        runAuth { repository.signup(s.fullName, s.identifier, s.password) }
+    }
+
+    private fun submitOtp() {
+        val s = _state.value
+        if (s.otpCode.length != 6) {
+            _state.value = s.copy(error = "Enter the 6-digit code.")
+            return
+        }
+        runAuth { repository.verifyOtp(s.otpIdentifier, s.otpCode) }
+    }
+
+    private fun runAuth(block: suspend () -> AuthResult) {
+        _state.value = _state.value.copy(loading = true, error = null)
+        viewModelScope.launch {
+            when (val result = block()) {
+                is AuthResult.SignedIn -> {
+                    _state.value = _state.value.copy(loading = false, success = true)
                 }
-                _state.value = if (res.error != null) {
-                    _state.value.copy(loading = false, error = res.error)
-                } else {
-                    _state.value.copy(loading = false, success = true)
+                is AuthResult.OtpRequired -> {
+                    _state.value = _state.value.copy(
+                        loading = false,
+                        mode = AuthMode.OTP,
+                        otpIdentifier = result.identifier,
+                        otpCode = "",
+                    )
                 }
-            } catch (_: Exception) {
-                _state.value = _state.value.copy(loading = false, error = genericSignInError)
+                is AuthResult.Failure -> {
+                    _state.value = _state.value.copy(loading = false, error = result.message)
+                }
             }
         }
     }
